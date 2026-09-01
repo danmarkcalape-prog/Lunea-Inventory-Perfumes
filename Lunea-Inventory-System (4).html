@@ -1,0 +1,1771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Lunea — Inventory &amp; Invoicing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#2c2434;
+    --plum:#2b2233;
+    --plum-deep:#221b29;
+    --cream:#faf6ee;
+    --paper:#ffffff;
+    --line: rgba(44,36,52,0.10);
+    --gold:#b98f4c;
+    --gold-light:#e7cfa0;
+    --gold-dim: rgba(185,143,76,0.14);
+    --rose:#b5695f;
+    --sage:#5a7d63;
+    --muted:#7c7285;
+    --danger:#a83f34;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Jost',-apple-system,sans-serif;
+    font-size:14px;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  h1,h2,h3,h4{
+    font-family:'Playfair Display', serif;
+    font-weight:600;
+    margin:0;
+    color:var(--ink);
+  }
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;font-size:14px;}
+  ::selection{background:var(--gold-light);}
+
+  #app{display:flex;min-height:100vh;}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    width:236px;
+    flex:none;
+    background:linear-gradient(180deg,var(--plum) 0%, var(--plum-deep) 100%);
+    color:#f1ecf5;
+    display:flex;
+    flex-direction:column;
+    padding:28px 18px;
+    position:relative;
+    overflow:hidden;
+  }
+  .sidebar::before{
+    content:"";
+    position:absolute; top:-60px; right:-60px;
+    width:200px;height:200px;border-radius:50%;
+    background:radial-gradient(circle, rgba(231,207,160,0.10), transparent 70%);
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:8px;
+    position:relative; z-index:1;
+  }
+  .brand img{width:38px;height:38px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 1px rgba(231,207,160,0.4);}
+  .brand-name{font-family:'Playfair Display',serif; font-size:21px; color:#f6efe0; letter-spacing:0.3px;}
+  .brand-tag{font-size:10.5px; color:var(--gold-light); margin:2px 0 26px 0; opacity:0.85; position:relative; z-index:1;}
+
+  nav.navlist{display:flex; flex-direction:column; gap:2px; position:relative; z-index:1;}
+  .navlink{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px;
+    border-radius:8px;
+    color:#d8cee0;
+    text-decoration:none;
+    font-size:14px;
+    border:none; background:transparent; text-align:left; width:100%;
+    transition:background .15s ease, color .15s ease;
+  }
+  .navlink svg{width:16px;height:16px;flex:none;opacity:0.85;}
+  .navlink:hover{background:rgba(255,255,255,0.06); color:#fff;}
+  .navlink.active{background:rgba(231,207,160,0.14); color:#f6efe0;}
+  .navlink.active svg{opacity:1;}
+
+  .sidebar-foot{
+    margin-top:auto; padding-top:18px; position:relative; z-index:1;
+    font-size:11.5px; color:#9c8fa8; border-top:1px solid rgba(255,255,255,0.08);
+  }
+  .rate-pill{
+    margin-top:14px; padding:10px 12px; border-radius:9px;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
+  }
+  .rate-pill label{display:block;font-size:10.5px;color:#b7abc4;margin-bottom:4px;}
+  .rate-pill .rate-row{display:flex;align-items:center;gap:6px;}
+  .rate-pill input{
+    width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14);
+    color:#f6efe0; border-radius:6px; padding:5px 7px; font-size:13px;
+  }
+
+  /* ---------- MAIN ---------- */
+  main{flex:1; min-width:0; padding:30px 38px 60px; max-width:1240px;}
+  .pagehead{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:22px; flex-wrap:wrap; gap:14px;}
+  .pagehead h1{font-size:27px;}
+  .pagehead .sub{color:var(--muted); font-size:13px; margin-top:4px;}
+  .btn{
+    border:1px solid var(--line); background:var(--paper); color:var(--ink);
+    padding:9px 16px; border-radius:8px; font-size:13.5px; font-weight:500;
+    display:inline-flex; align-items:center; gap:7px;
+  }
+  .btn:hover{border-color:rgba(44,36,52,0.22);}
+  .btn-gold{background:var(--gold); border-color:var(--gold); color:#fff;}
+  .btn-gold:hover{background:#a67f41;}
+  .btn-plum{background:var(--plum); border-color:var(--plum); color:#fff;}
+  .btn-plum:hover{background:var(--plum-deep);}
+  .btn-danger{color:var(--danger); border-color:rgba(168,63,52,0.35);}
+  .btn-danger:hover{background:rgba(168,63,52,0.06);}
+  .btn-ghost{border-color:transparent; background:transparent;}
+  .btn-sm{padding:6px 11px; font-size:12.5px;}
+  .btn:disabled{opacity:0.45; cursor:not-allowed;}
+
+  /* stat cards */
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-bottom:26px;}
+  .stat-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 20px; position:relative; overflow:hidden;
+  }
+  .stat-card .label{font-size:12px; color:var(--muted);}
+  .stat-card .value{font-family:'Playfair Display',serif; font-size:27px; margin-top:6px; color:var(--ink);}
+  .stat-card .value small{font-size:14px; font-weight:500; color:var(--muted);}
+  .stat-card .delta{font-size:11.5px; margin-top:6px; color:var(--sage);}
+  .stat-card.accent{border-color:rgba(185,143,76,0.35); background:linear-gradient(160deg,#fff, var(--gold-dim) 220%);}
+
+  .grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:18px;}
+  @media(max-width:920px){.grid-2{grid-template-columns:1fr;}}
+
+  .panel{background:var(--paper); border:1px solid var(--line); border-radius:var(--radius); padding:20px 22px; margin-bottom:18px;}
+  .panel h3{font-size:16px; margin-bottom:14px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .panel-head h3{margin-bottom:0;}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px;}
+  th{text-align:left; font-weight:500; color:var(--muted); font-size:11.5px; padding:0 10px 8px; border-bottom:1px solid var(--line);}
+  td{padding:10px 10px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  td.num, th.num{text-align:right;}
+  .muted{color:var(--muted);}
+  .tag{
+    display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px;
+    background:var(--gold-dim); color:#8a6a30; border:1px solid rgba(185,143,76,0.3);
+  }
+  .tag.low{background:rgba(168,63,52,0.09); color:var(--danger); border-color:rgba(168,63,52,0.25);}
+  .tag.market-uae{background:rgba(90,125,99,0.12); color:var(--sage); border-color:rgba(90,125,99,0.3);}
+  .tag.market-ph{background:rgba(181,105,95,0.10); color:var(--rose); border-color:rgba(181,105,95,0.28);}
+
+  /* category section */
+  .cat-block{margin-bottom:22px;}
+  .cat-title{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--gold-light);
+  }
+  .cat-title h3{font-size:16.5px; display:flex; align-items:center; gap:8px;}
+  .cat-title h3 .dot{width:6px;height:6px;border-radius:50%;background:var(--gold);}
+  .cat-count{font-size:12px;color:var(--muted); font-weight:400;}
+
+  /* forms */
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:12.5px; color:var(--muted); margin-bottom:5px;}
+  .field input, .field select, .field textarea{
+    width:100%; padding:9px 11px; border:1px solid var(--line); border-radius:7px;
+    background:#fdfcfa; color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--gold);}
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .hint{font-size:11.5px; color:var(--muted); margin-top:4px;}
+  .calc-line{display:flex; justify-content:space-between; font-size:12.5px; padding:5px 0; color:var(--muted); border-bottom:1px dashed var(--line);}
+  .calc-line b{color:var(--ink); font-weight:500;}
+
+  /* modal */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(34,27,41,0.45); z-index:80;
+    display:flex; align-items:center; justify-content:center; padding:24px;
+  }
+  .modal{
+    background:var(--paper); border-radius:14px; max-width:560px; width:100%;
+    max-height:88vh; overflow-y:auto; padding:26px 28px; box-shadow:0 20px 60px rgba(0,0,0,0.25);
+  }
+  .modal.wide{max-width:760px;}
+  .modal-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .modal-close{border:none;background:transparent;font-size:20px;color:var(--muted);line-height:1;padding:4px;}
+  .modal-close:hover{color:var(--ink);}
+
+  /* invoice builder */
+  .invoice-layout{display:grid; grid-template-columns:1.5fr 1fr; gap:18px; align-items:start;}
+  @media(max-width:980px){.invoice-layout{grid-template-columns:1fr;}}
+  .market-toggle{display:flex; gap:8px; margin-bottom:16px;}
+  .market-btn{
+    flex:1; padding:12px; border-radius:9px; border:1px solid var(--line); background:var(--paper);
+    text-align:left; cursor:pointer;
+  }
+  .market-btn .m-name{font-weight:500; font-size:14px;}
+  .market-btn .m-cur{font-size:11.5px; color:var(--muted);}
+  .market-btn.active{border-color:var(--gold); background:var(--gold-dim);}
+
+  .pick-row{
+    display:flex; align-items:center; gap:10px; padding:9px 4px; border-bottom:1px solid var(--line);
+  }
+  .pick-row:last-child{border-bottom:none;}
+  .pick-row input[type=checkbox]{width:16px;height:16px; accent-color:var(--gold);}
+  .pick-name{flex:1; min-width:0;}
+  .pick-name .n{font-size:13.5px;}
+  .pick-name .p{font-size:11.5px; color:var(--muted);}
+  .qty-box{display:flex; align-items:center; gap:6px;}
+  .qty-box button{width:24px;height:24px;border-radius:6px;border:1px solid var(--line);background:#fff;font-size:14px;line-height:1;}
+  .qty-box input{width:40px; text-align:center; padding:4px; border:1px solid var(--line); border-radius:6px;}
+
+  .cart-line{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--line); font-size:13px;}
+  .cart-line .l-name{flex:1;}
+  .cart-line .l-sub{font-size:11px;color:var(--muted);}
+  .cart-total{display:flex; justify-content:space-between; align-items:baseline; padding-top:12px; margin-top:6px; border-top:1px solid var(--ink);}
+  .cart-total .amt{font-family:'Playfair Display',serif; font-size:24px;}
+
+  /* invoice preview / print */
+  .invoice-doc{background:#fff; padding:6px; font-family:'Jost',sans-serif; color:#2c2434;}
+  .invoice-doc .idoc-head{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid var(--gold); padding-bottom:18px; margin-bottom:22px;}
+  .invoice-doc .idoc-brand{display:flex; gap:12px; align-items:center;}
+  .invoice-doc .idoc-brand img{width:52px;height:52px;border-radius:50%;}
+  .invoice-doc .idoc-brand .nm{font-family:'Playfair Display',serif; font-size:20px;}
+  .invoice-doc .idoc-brand .tg{font-size:11px; color:var(--muted);}
+  .invoice-doc .idoc-meta{text-align:right; font-size:12.5px; color:var(--muted);}
+  .invoice-doc .idoc-meta .num{font-family:'Playfair Display',serif; font-size:18px; color:var(--ink);}
+  .invoice-doc .idoc-bill{display:flex; justify-content:space-between; margin-bottom:18px; font-size:13px;}
+  .invoice-doc .idoc-bill .k{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:3px;}
+  .invoice-doc table{margin-bottom:6px;}
+  .invoice-doc th{border-bottom:1px solid var(--ink); color:var(--ink); font-size:11.5px; padding-bottom:8px;}
+  .invoice-doc td{border-bottom:1px solid var(--line); padding:9px 10px;}
+  .idoc-totals{margin-left:auto; width:260px; margin-top:10px;}
+  .idoc-totals .row{display:flex; justify-content:space-between; padding:6px 0; font-size:13px;}
+  .idoc-totals .row.grand{border-top:2px solid var(--gold); margin-top:6px; padding-top:10px; font-family:'Playfair Display',serif; font-size:19px;}
+  .idoc-foot{margin-top:30px; padding-top:16px; border-top:1px dashed var(--line); font-size:11.5px; color:var(--muted); text-align:center;}
+  .idoc-sign{display:flex; justify-content:space-between; align-items:flex-end; gap:24px; margin-top:38px;}
+  .idoc-sign .stamp-seal{width:92px; height:92px; flex-shrink:0;}
+  .idoc-sign .sign-block{flex:1; max-width:230px;}
+  .idoc-sign .sign-block .sign-line{border-bottom:1px solid var(--ink); height:38px;}
+  .idoc-sign .sign-block .sign-label{font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-top:6px;}
+
+  .empty{text-align:center; padding:50px 20px; color:var(--muted);}
+  .empty h4{color:var(--ink); margin-bottom:6px; font-size:16px;}
+
+  .toast{
+    position:fixed; bottom:24px; right:24px; background:var(--plum); color:#f6efe0;
+    padding:12px 18px; border-radius:9px; font-size:13.5px; box-shadow:0 10px 30px rgba(0,0,0,0.25);
+    z-index:100; display:flex; align-items:center; gap:8px;
+    animation:toastin .25s ease;
+  }
+  @keyframes toastin{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+
+  .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+  .icon-btn{width:28px;height:28px; border-radius:6px; border:1px solid var(--line); background:#fff; display:flex; align-items:center; justify-content:center; color:var(--muted);}
+  .icon-btn:hover{color:var(--ink); border-color:rgba(44,36,52,0.25);}
+  .icon-btn svg{width:14px;height:14px;}
+
+  .searchbar{display:flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px 12px; max-width:280px;}
+  .searchbar input{border:none; outline:none; flex:1; background:transparent;}
+  .searchbar svg{width:15px;height:15px; color:var(--muted); flex:none;}
+
+  .filter-chip-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;}
+  .chip{padding:6px 13px; border-radius:20px; border:1px solid var(--line); background:#fff; font-size:12.5px; color:var(--muted);}
+  .chip.active{background:var(--plum); color:#f6efe0; border-color:var(--plum);}
+
+  @media print{
+    body *{visibility:hidden;}
+    #print-area, #print-area *{visibility:visible;}
+    #print-area{position:absolute; left:0; top:0; width:100%; padding:0;}
+    .modal-backdrop{position:absolute; background:none;}
+    .modal{box-shadow:none; max-height:none; overflow:visible; padding:0;}
+    .no-print{display:none !important;}
+  }
+
+  .loading-screen{display:flex; align-items:center; justify-content:center; height:100vh; width:100%; flex-direction:column; gap:10px; color:var(--muted); font-family:'Playfair Display',serif;}
+
+  /* ---------- LOCK SCREEN ---------- */
+  .lock-screen{
+    min-height:100vh; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 20%, #362b40 0%, var(--plum-deep) 60%, #1c1622 100%);
+    padding:30px; text-align:center;
+  }
+  .lock-logo{width:76px;height:76px;border-radius:50%; box-shadow:0 0 0 1px rgba(231,207,160,0.4), 0 10px 40px rgba(0,0,0,0.4); margin-bottom:18px;}
+  .lock-screen h1{color:#f6efe0; font-size:28px; margin-bottom:4px;}
+  .lock-sub{color:#c9bdd4; font-size:13px; margin-bottom:26px;}
+  .pin-input{
+    width:220px; text-align:center; letter-spacing:10px; font-size:22px; padding:14px 10px;
+    border-radius:10px; border:1px solid rgba(231,207,160,0.35); background:rgba(255,255,255,0.06);
+    color:#f6efe0; outline:none;
+  }
+  .pin-input:focus{border-color:var(--gold-light);}
+  .login-input{letter-spacing:normal; text-align:left; font-size:15px; width:260px;}
+  .lock-error{color:#e39a8d; font-size:12.5px; margin-top:10px;}
+  .lock-hint{color:#8d8098; font-size:11.5px; margin-top:22px;}
+  .lock-btn-row{margin-top:16px;}
+
+  /* ---------- RESPONSIVE / MOBILE ---------- */
+  @media(max-width:760px){
+    #app{flex-direction:column;}
+    .sidebar{
+      width:100%; flex-direction:row; align-items:center; padding:12px 14px;
+      gap:14px; overflow-x:auto; white-space:nowrap;
+    }
+    .sidebar::before{display:none;}
+    .brand{margin-bottom:0; flex:none;}
+    .brand-name{font-size:18px;}
+    .brand-tag{display:none;}
+    nav.navlist{flex-direction:row; gap:4px; flex:none;}
+    .navlink{padding:8px 10px; white-space:nowrap;}
+    .rate-pill, .sidebar-foot{display:none;}
+    main{padding:20px 16px 50px;}
+    .pagehead{flex-direction:column; align-items:flex-start;}
+    .pagehead h1{font-size:22px;}
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .field-row{grid-template-columns:1fr;}
+    .invoice-layout{grid-template-columns:1fr;}
+    table{font-size:12px;}
+    th,td{padding:8px 6px;}
+    .modal{padding:20px;}
+    .idoc-head{flex-direction:column; gap:14px;}
+    .idoc-meta{text-align:left;}
+    .idoc-bill{flex-direction:column; gap:12px;}
+    .idoc-bill > div:last-child{text-align:left;}
+  }
+</style>
+<!-- Optional free live database (Firebase). Safe to load even if not configured yet;
+     the app runs fine on local/browser storage until FIREBASE_CONFIG below is filled in. -->
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<div id="app"><div class="loading-screen">Opening the boutique…</div></div>
+<div id="modal-root"></div>
+<div id="toast-root"></div>
+
+<script>
+/* =========================================================================
+   LUNEA — Inventory, Sales &amp; Invoicing
+   Vanilla JS single-file app. Persists via window.storage (personal/private).
+   ========================================================================= */
+
+const APP_PIN = "040415";
+let unlocked = false;
+
+const LOGO_B64 = "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCADcANwDASIAAhEBAxEB/8QAHAAAAgMBAQEBAAAAAAAAAAAAAwQAAgUBBgcI/8QAQxAAAgEDAgUCAwYCBgcJAAAAAQIDAAQRBSEGEjFBURNhInGBBxQyQpGxUqEjM2JkwdEVF0NykrKzJSYnNDZUY8Lh/8QAGAEAAwEBAAAAAAAAAAAAAAAAAAECAwT/xAAtEQACAgEDAgQFBAMAAAAAAAAAAQIRAxIhMRNBBFFhcSIzgaHwFCQ0wUJDkf/aAAwDAQACEQMRAD8A/YprmRXcbVRxipLL1KGGqwYGgKLVKlSgRKlSpQOyVKlSgDhqpFXqUqACyA0JkxmmjVWXPak0UpCbKRmhkeabZaGV9qlo0TFGUncUNkY04UHeoEHMObpRpK1Ge6EdqE64NadwkfNlAcUpLHjtUuI07EyuDQnQknamnQ77UPAXqd6mirM+VSNqoInYMVGeUZPtTkidSBQuSih2JtGTk0F1ODg9PNPso+lKTrQAq1CZcnNGKgmrcgpDPpQ6VSTHKaXE5AxmurMWNdNnHpZCSKsDUyDQmbB2NIYwD71YHNLK/miK3agTQapVA29XBpiolSpUoESpUqUAQ1U1auGgZRl2oZXxRj0qhFIpMCRvXMUVhVSPNKirAuNqGyijsNqr07UikLBFBJZeYeKVliG/8qfO/WhTLttSaKTM/kbPtVJY8ineVdxjeo0Ab8OTU8FGa0Z5fagyxq2w3rSkiZVPLQkhXkORvRSYWY7wcp3qhiOe9assYJ5m3oDBc9DQ4js3WkKv12qyyY3FLOdzUjf8p6U0yGh4T7V0Pzb96TBwaKrZ6VRFDS9M5+lXU0GNgcZ60SqAKDmrhvNBU96uKCGgwNdoQogNAjtSoKlMRKlSpQFnCKqavVTQMpXCKua5ikMG4FDYdqK1DYZpFIERt0obUZgcUJqRYFxiuc5BB6Y2ojeKEwxQ1Y0FUo532NE+7K4xgUmcg7U5Z3DKQGBNZtbjfGwldWxXNZ7oebpXq5lhniI2zWHcWjLKQpOKbdcijLUcY5FTlPLzbYzjrVVNWxvQiiynIwetEQ0MDeiKAdh1qyA6b4x1o6HOxpVMrR4m/WmhMPyb1bFXTBAxUYb0zM4ufFXHWuAVYUCO1KgodxPDbwSTzOEjiUs58AUXS3EXZlVSzEKo3JJwBSK6xp8k5ggna5kHUQIXx8yBivGyXl9xXrCWaM0NpktyA7Kg/M3k/wCde60+ytrC1W2tYhHGo+p9ye5rnxZpZm3Dhd/M1yYljXxchlOQDgjPY9a7UNQ7AnwK6TIqetcNcgkE0Eco/Oob9RmrUhlGHmhsNqMwobUFIEwoTdc0ZqGwpFoAwoZydqK+wqRDDb0ijsUJ3JGc0wI0RPfxUU+K5KcDamSLs7q2RkDxS01xIX2JFMOaE8e+SOtS0mWgDKVO3Q9DVk8GuxOCu+/tU5O+cj9qQyy4AOcnxV1BzkVVAQcEUcAYpohkG+1XUYNRV2q43qhBonwaN1oCCirTIkEHSp2qCk76a/S4ijs7WGVCpaR5ZCoGCMKMA7nP8qTdEpWCBvbRNRuridJYxmSFQnLygINic+a8zxvfPHw5YWo5la6PqScx3YDfJ+ZINbmsXd26xQxxALNmC4hYZZOdSEcMNiObb69jXj+OkdbLTZSxcAEZPbmVGA/5v0rh8VJxxyS/Nzp8NFPJGzd+zm1jhN5IGDsUiw2MfCwLf5fpXsK8LwFfIk1qC3wXcH3cnxNESQPqjAj5V7oVv4SukkjPxN9R2SsniFdUazK6e0XqE7fCebHffOBt5BrWoFvcwXPqiGQP6TmN8dmHUfzreaUlpvkxi6dmDwZFqsemobp4sFVMfOrM/pY+AZzjYe3XrXo6EHgt/Rt2ljRmHLGjMAWwOw77UrFHPbX91c3d+htpOQRI6qoTAOd+9Zwj04qPJcpa22OnAqjb1fIO43B8VxhtWogL571Q4PWisMg0MjvSLQGQY6VVAMds0RgSN80M/DuKRR0uwGM9Kq03w8pAz5qrE0Jsk0Ahq39NmHMxznpinmFttkr023rDJZSetcMznG52GKYnG+5SIjAYfWmUwcEHFJDCY5X5sjJx29qahbAGKyWxoxhVB7Yq/IRvVQcj3okZ7GtCGRetFUDFcAHbpV1WmSXUUQDFJ6jf2+nQG4uvVWIfidYywX54qulavZamGayMsiKcF/SZVB8ZNTrjem9ydMmr7Gh9ax7uaSa3nuzqqW9tApaRIF5mUAZ+Jgc5x2GK2BVIYIIef0oY4/UYu/IoHMx6k+TTabJTow4Jrpo0nuoLu3RfijmlAkAHvg8yjpkHI9wRXn+I43uLg6XcosdverzWF0GDRCUElU5vclwPZh4r218LuSJoreG2YMCG9Z2wQfYCvPPpF1bWjwzFGifPNyRGaFx2EkZ3z/bXB879efLjbWnlGuOaTs8Bpt62m3M1jqMUyQsQsyptJDIp+GRf7Sn9RX0jRuIl+6odRkSSHGEv4QTDJ/vgbxt5B2968rrk/DV4qwaq5trpRyx3dvJ62w7MCA+B4YZHmsa2sZLK49bSuJdOYH86XfoNj3Vsf41wY5zwSqLtff8A4d04xzq5Kn+dz67Hf2MsfPHeWzr/ABLKpH71maxxLpGlwM/rLcSsfhhgIZnY9vFeLvJLq6MKQalp8TcuJWUpM7t5HpqT9K1uHtCkt5xdw2VxeXmPhu7/ADFHH7om7k/MD6V2LxGTJtFfU5HghDeTG7j+kNmdTiR9Wedbsxrgm1jXcKD+UbYJOM5apqVzZtdRNcQWuoyzHlSWcM8CH+CNQpB+fU/yDNvoohd5rmP75O7c7tOp9PPnkXJYjsWJ9sV2OK8uoZm0+9tJ1Eh9WEgkc43xyuCEPTAwB+9aKMjPUrD6c+oQ2qR2UGmzQQjl9CJpInT+yObIB9jita2mS4gSZAwDDOGGCPII7EdKU0tBJZtexTySTXIDF5lAII2ClRjAG4wPfer2NpNBJJNcXPryPsAqciKMk7DJ6k9SfFbRtEMaYbUMiimh1Y0DK0N02o9VIoKFmTuKGU36U0y+K4qcxCjvRQ7EWU0Nk3+H+daF1bGJQ2Qc0oQM9KQJ2Ixrg4IwR1piPIO2/tSUUncmnLd8bjesjQZjfHUb0YHO9L83Mc0WJuxq0xNB0fG1MRkHvS4HjeiIKpGbEuMNuF9RP/wn9xWd9mhzw6T/AHh/8Kd4ybHCepE9oD+4rO+yxubhlj/eZP8ACuV/yV7Gi+Q/c9bmujcVXtXz2+mnh+1K0s/vdy8HqRsI3mZgMoSetbZcvTrbl0ZY8eu/RWfRKnvXM7Yr5/Nc3Kfalb2BvLqSBJFKpJKWAzGT0p5cvTrbl0KGPXforPfSwxTDlmiSUeGQN+9CFjZA7WVt9IV/yry/2qGaDQo7q3ubmGT11jIjmZVKkHOQDjtTnDVjLf8ADWnm9upxEbdeWKGUpkY6sw3J9s4Hv1qepeRwrdIfTqCnZ6REWNeVECDwoxXTXz7i6C74Umt9S0m7uBBJJyPDJKXXPXBz1BGflXtF1K2/0MuqyN6duYBOSey4zTx5tTcZKmgnipKSdph7yKWa2kihne3kZcLKihih84O1Y+j6TrNk7fetXiuQRy+sbXExA6AtnBxnuDS/DrT8SWp1a/8AUW0kdha2isVUIDjmfH4iT52FZ/HWmPo2lNrmhzT2M9symRUkYxyITg5UkjbI/nUTncepWy9e3sVGPxdNvc9jFGkMSxxjCqMAV0+KyeENY/07oNvqDKEkbKSqOgcHBx7d/rXn9G1PU+JuKdStbi3urLRrDMapho2uJObGWbY4wCeUHxnNX1Y0q78E9N277HtDkdQf0qhr599pOhro2inXuH7q7026tpE5xFcOUkVjjdSSMgkfzr0/BGqza3wtZalcqqzSoVk5RgFlJUkeM4z9aI5bnoa35NOnUNaNntiuHzUzg1z3rUg4aGSwbI2NEPXaqStv0oApcSySgBj07UsR5FHcDAOc+3ihNnPigaMBH3HamoZKTUcwpiAY+VZI0ZoRP70whDGloQpAxTUQHjpTQDEZoqkUJMUvd38VtMlusctxcOpZYYhluUfmJJAVfckVV0ZivHTcnBuqt4tyf5is37IJBJwkW/vUn/1pviaHV9V0C906Cxt4muYTGrSXX4ScdcL/AI153ha71TgfRmstZ4fvprcTPKbuzZZkUHHUDcdK5Zusym+KNoq8TiubPpNfNdXcf657JQfzRf8ATNeu4e4s4f10hdO1OJ5j/sX+CT/hPX6Zrx32lafqum8WWPFmnWkl3FFyGdUBJQptuBvgqcZ7Gn4lqUFKO6TTJwLTNxls2mj6aK+a3kn/AI2QJ/aT/o16rRuLtN1a3VrG21KSUjeH7o4KnwWI5PrmvF3q6hB9sVvqN9YyxQZQs8aNIiAxlRlgMZz1o8RJSUXHzQYIuLkn5M9L9rzcvCkZP/u4/wBmrc4NP/dTSj/dY/2rzX2vSG44bgtbWOa4na4SQJFEzHlAbc4G3UVv8CzLJwpp0eHWSG3SORHQqysBuCCKcH+4l7ImXyF7mN9sTcnC8B/va/8AK1K8VSyR/ZBaMmQGgtg+P4SR/wDlNfa9BNecOJb2kUk00dwsrIikkKAwz+pFP6LaWut8AW+lXIkVXslglUoVeNgPB7gjP0rOUdeWaXdFxko44N9mL/Z5ZabfcHafcejzPyFXIkYfEGIPQ1tz6DpE0TRz2SSxsMFHdmB+YJr5hot/xF9nF/NY6nplxfaTK/MJYASuf4lPQZHVTivXWnH1vqgEWhaJq9/cvsA8HpRIfLyE4A/Wqw5YaFGSprtQsuOepyi7T7nprOz0/SbForSCGztlzIwX4VG25P0FZGhcRR8SxzyaK4EEMnpmeZCcnr8K5HbyaPNpN9dcLXum3l96t7eQyh5RkIjuD8Kjsg2A9t+prwX2cakeDbG60niK1vbed7nmVUtmcfhAJBHUHAxjNVkyOEoriIQgpRk+Weg+1SC7Tga/eXUHkUGPKGFFB/pF7gZH60x9k3/oHT/nL/1GpP7QZdR4g4JvotI0y6MfKsmZ4jHJKFYHEcZ+I9M5OOmADmqfY5qcEvCVppuJlu7dpBLG0LDkyxIJJGMEH9alV+ov0/sv/R9f6PcVPnVj1qp8V2HOVbPbrVGxjernzQpDjrQAJtjUUy78gyM+1R8EjFUwfegoxRFhqYjjHTvTktrzL6sPxJ38r86GAvJgAg96waaNLTKIPT69qPHKOxpZiRt1qK1NNgzRjfbrSAFzZaxd3ItJrqG7WMhoeUtGUUjlIJHw9wR3JzRon+LfpTKMCNzV1ZDKW0l3cOryRNaQqchGYGR/njIUe2ST7U+rb9aAvTaiKT1qkqIPL8W8AaFrxNzGh0/UOq3NuMZPll6H57H3ry0PEvF3AN3HZcUQvqmls3LFdo2WA9mPU/2W38GvqatXLy3tr22ktbuCOeCQYeORQysPcGsJ4E3qg6f5yaxy7aZboFoOs6brmnpe6ZdpcwtscHdD4YdVPsa0M47mvlOscA6xw9qLa3wDfPE+PjsZGyGH8IJ2Yezb+DTXC32i/fLk6VxJMmhamjcrLLbFUY+zMxCn5jHg0RzuL05FT+wpYbVwdr7n0qWWOKMySyrGg6szYH60p9+km/8AJ2ssw7SOfTT6E7n6CpBaW2UuCTcuRlZZG5/+HsPoKazW+7MKFf8Atdt/UsIvbkd/58w/agXF9f2Cma+t4prZd5JbctzRj+IodyB3wSR4rRDYpLV71LOzZyvqSSZSGEfilcjZQP38DJO1JqkNIfVlZAysGVhkEHYipnt2pTSrdrTS7S0dgzQwJGxHQkKAf2pjODTFRc7b1wnfGTXCar3pjSIep3qZ26mud6nagomarUrlAHDQm360VthS0sirnJFJsaR1yoHUUIuM+KXlnYk4OBQvUk7tUOZoomsw9FudPhP70ldtBNuhEMvg/hb5eKdYiRNjkeRWZdWpdiFO3vTUidIjLIyScjdfero4PU7ipPaTiLLLzIOhpGQSxe496NJVmtHvuDR1JC9axIbzGxyDTsN1kDJzTQmakTnbNNJuua8xoWuLqF9f2pCKbdlaIq2eeJhs3seYMMfKr2nE8cdzdw6ji0aAtiFo253XnCo6Ho4bI6dCQKWuInBnph7V0HFZD6/YxXgs5VnSf4eaP08lAz8ik47E53GdgT0pebirT47SS4WG7fliMqr6YBdRKIjjfsxHXtvRrj5i0s9DkVn65oeka7biHVdPgulAwpdfiX5MNx9Kmp6lBptp95ullEY3cqoPL067+/QZPWradqdrfXdzbQOWe2kMUucfCwOMY6+4yBkbim9L2Yla3R5SLgK80ly3C/Fmp6ZHnP3aYCeH9DitCCH7QYPhfUeHLsD8728sZP0U4qul8Vs49XU0gt7cQTSs4DA5jmMeFBzz5GCcdCR5rWfXbJIhKyzqnriBmMeyuWVR33GWG4z3PY1jGOP/ABdfU0lKfdWLwW3Fk+PvmsaZar3FnZM7f8UjYH6GtLT9Nt7SY3DNNc3TLytcTvzuR4HZR7KAKz7riaxgtJZxHcP6cU0vIEAJEUgRx168xH03ql5rkqXv3OKFxK15BbEFBmP1Iy+fxYbp9KtOK7kNN9j0Wa5mvN3XEinSkmsyzTlIJf6WLAZHmER2zsc527bda1r/AFC3sp4Yp1kHryrEjAArzM3KoO/nx071ammLS0PZ8Vwms7T9Xs7+xmvLT1JooiwIUAsSucgDOebbocGl04i06RIjD68hmhM0aqmSyBA5I37BlyPJAo1oKZsE1ysaHiLT7iSNLZpGEsyRI/JsxeL1VPyK9/O1PNISdyaFJPgeljRYYrmObpSyuTRll27CnYqK3DMq4zWfISVO/TrTc8gf3PYUt9zmc+pMRFF5b/KspPc1iq5Fo0aWQKnxH2rVjghjQLIV5upyazbrU7exX07ReZj/ALQ9/NYtxeSySs7OST71k5pFqDl6GhYX7RtjO3itmGeKdcjAzXkjzAkgmmbO+MBw4JHkGrtoVJnoriKYpyxkMvis/UpPWdQ8ITlGNhRbTUkdADnPmmy0U4+MBvfvVqRDiYEtlkc6DI8ilZISFZCW5WBBwcHBr0b2TLk275/snrSc8I6SIUb5bVWoDJt7e2jvIrsIwmjh9BW5j+DOcEdDuB1okmm6fcIyzwmYMjIPUkY8oLBiF323AOR4HijyRBTnG3kV2NAccpo+F9g3Cw2tut0l2Gm+8KnIZPWbmdc5w2/xDO4z5NUTRtKaH0TA/J6TRf1rbKz+oe/8QBzRlR1HQkUVOYDHLT0xFbJqmnWWpqn3xJJORHQESspKtjmBx1zgfpR7Wzt4LuS8jRjcSKFaRmLNy5LAZPbJNUUtjaiJI2OlFK7oW9ULLoWj+gYJLT1YzHJGA8jNyrI3M+N9snfI3otxo1hdNG9x94ldECKz3DlsBw4yc74ZQfpRwzfOrqzE5zRpj5Bb8xR9B0uT1Q8EhEqSoy+s3LiVgzgDO2WAO3Q0c6TYNci6KSmYSxzc5lbJdFKqTvvgEijgse5FWHSjTHyFbEBw/o4Ur6UnLyqnL6z4CrJ6igb7ANv/AC6UbUtL069vUvJ45GnQJhllZfwPzrsDjZt6ZYgCl5JD5qWopcDV8nLW1gsjPJaRhZp8M7OxJdlGF5j126eaRh0exS1gieBFkiEnxQkoAZP6wDvynPT2HinDIw96nOW7VLcS0mKjRdNWdJkgaNo2R1WORlVWRCikKDjZTj5Yp2FFijWMM3KihQWYscDyTufnQ2JB7k/PFRw/phh79KjUlwVpY2SojJyMDrvSrXK8+Dkj2OKTnnIGBk0m8N1IOflYKfNS5lLGasWp21tk/wBdIB17CsvU9Xnu2IY/D2A7VRbVzgyAAZ6Zrj26AHJ29qiU21RcccU7M9nZjgk11kbPXNGdVDfCAPc0Esc9azNBx1xvjqKXkSm1GdgDXHjyTkdBXdJHImJxylNs4p22vmTG9KTRbbUJFIQ5FZ0Vyems78OQD1rSilhnHJIoPbevL6NdRWl0rzJzL3361o319FNOXtPhwexp3sS1uaU2nwPnkblPikptJlT4kGf92llvpQ2Sc+aftdTIxhh8qakJp9haOOeM4zt70zF6n5kB+VOJfQSjE0QPvirqllLvHKYz86pMluuULIEJ3Qg0ZY0NFNpMBlJEcUMx3CnBSqsVpnRDH1JqckK9xQnd+hBzQnLkYxRaHQwzxL3FCeaMb5P6Uo5bwap8QOSM0mxpDElyo3AJpZ7kj8KD6mr5XH4QD8qG6vj4Rj5Vm2UkAe6nJwoA+S1QzSBcyPv865Mr83xNQzGO+TUM0QxbXUQfLrznsDnFbb6nai2BCIT4Neb5Rvy9RUwzKOuBUptcBKKlyaM1+Jz+BFGew6VWe8lkiWEgBV6YpEgxgZPXtVFklDf0ZKnyKlpmiSQZ5QEIzv4oEjlhvsKuihsIMl+5PSrXNtJCqmVccwyvvRVjuhVYzKxKr+lFWwbG8TZrR0RQQ5I+IdK2Fj23UU1CyXkSPLxuyMGU4INckkLsWY5JO9A5/eucx5sV1HOXkIxtSzyEKV7GjNvQJV2OKmSGmDViTuwPzq0Vw0MnMp3pSTIPehlvepKNqK7ST8ezeaKTtlTt7VhROc9803DOy7A7eDQBrRXDL3z86bjuUYfEMVkRTI+2eU0bcAb96ANuK4kVf6Kc/rR49Qul2Y8wrzyyFc4znzmjxXhGA24oFSZvC/X86j9KgvbYncAVlCaKUfC2/g1yRMpkUqYUjTa7tifxihtdwZ7GseQeKCdqjgpJG411D2IFUN1CfzCsRjt71ZWo1FaUaEskTHOTVHeFiMCl1deXc71z1VDdKVgkhxvSGOUAj96qxJUAqoAzvQElLNgFVHvWm1lE2niczITnPWqpsltIzZxDzKIuY7DPN57/AEolxE8aKJE5eYZFBlkVTyqBVZneRkUyl8KOo/D7VLW5VhN0CkfmGQc9as3NKh9ZnJUYQUzY26lAxFMyQKEyAKvSRqFrACIh+bBzjArS9d+5zSMOCcbZ6fKmDkknmH0pNsdWeVJBOx3rgkUbb5rtUYZbFdJmGBQ981x9ulLFip2rokYnBOcVLGSVFYkE4pSWIjcbinJKExPMB2qWhiuWU5FFVjy9d6cSNHA5lBqXEEaY5RSoBQOaNDcuu3UUNhVB1xT0hZoRzowxnercwApKAApk1ZXZWwDt4qaCxr1cEYODTUFzIGAzmkWAKg1IyQ+xpDs1g6yHdQPlXDCGHwtn51nmRw+M0wJGDYB2oGElgddyMVQLvTUcrlQCc1cKroxI6Y6fOlQxJ8AbdqrHuTR5UUdqXBKttRQFuU5wM5ookcR8mT1zQwTzZzuKuNyc0UAIq2cirrGxw1WfbFWVjy0xWOWdyEXlNMyThozjYVmxgDBo+ciixNFRIqEnO9dW4J3bqaXl65qoqWNH/9k=";
+
+const KEYS = { PRODUCTS:'lunea:products:v1', INVOICES:'lunea:invoices:v1', SETTINGS:'lunea:settings:v1' };
+
+/* ---------------- optional live cloud database (Firebase) ----------------
+   Leave this as-is and the app works fine on this device only (browser storage).
+   To turn on live sync between devices/browsers, paste your free Firebase
+   project's config values below — see Settings inside the app for full steps. */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCMBSuxu5lq7PRXkNUaruzKdNpFJLMLV4Q",
+  authDomain: "lunea-perfumes.firebaseapp.com",
+  projectId: "lunea-perfumes",
+  storageBucket: "lunea-perfumes.firebasestorage.app",
+  messagingSenderId: "611607850325",
+  appId: "1:611607850325:web:4371cb03f1313fec4f93dc"
+};
+const FIREBASE_CONFIGURED = !!(FIREBASE_CONFIG.apiKey && !FIREBASE_CONFIG.apiKey.startsWith('PASTE_'));
+let cloudReady = false;
+let cloudDb = null;
+let cloudUnsubscribers = [];
+
+function detachCloudListeners(){
+  cloudUnsubscribers.forEach(fn=>{ try{ fn(); }catch(e){} });
+  cloudUnsubscribers = [];
+}
+
+function attachCloudListeners(){
+  let doneProducts, doneInvoices, doneSettings;
+  const whenProducts = new Promise(res=>doneProducts=res);
+  const whenInvoices = new Promise(res=>doneInvoices=res);
+  const whenSettings = new Promise(res=>doneSettings=res);
+  let firstP=true, firstI=true, firstS=true;
+
+  const unsubP = cloudDb.collection('products').onSnapshot(snap=>{
+    state.products = snap.docs.map(d=>d.data());
+    if(firstP){ firstP=false; doneProducts(); }
+    if(state.loaded) renderView();
+  }, ()=>{ if(firstP){ firstP=false; doneProducts(); } });
+
+  const unsubI = cloudDb.collection('invoices').onSnapshot(snap=>{
+    state.invoices = snap.docs.map(d=>d.data()).sort((a,b)=> (a.seq||0)-(b.seq||0));
+    if(firstI){ firstI=false; doneInvoices(); }
+    if(state.loaded) renderView();
+  }, ()=>{ if(firstI){ firstI=false; doneInvoices(); } });
+
+  const unsubS = cloudDb.collection('meta').doc('settings').onSnapshot(doc=>{
+    if(doc.exists){
+      state.settings = Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), doc.data());
+    } else {
+      cloudDb.collection('meta').doc('settings').set(state.settings).catch(()=>{});
+    }
+    if(firstS){ firstS=false; doneSettings(); }
+    if(state.loaded) renderView();
+  }, ()=>{ if(firstS){ firstS=false; doneSettings(); } });
+
+  cloudUnsubscribers = [unsubP, unsubI, unsubS];
+  return Promise.all([whenProducts, whenInvoices, whenSettings]);
+}
+
+/* Data-layer helpers used by the UI. Each one writes to the cloud database when
+   connected, and otherwise falls back to this device's own storage. */
+async function dbSaveProduct(product){
+  if(cloudReady){
+    try{ await cloudDb.collection('products').doc(product.id).set(product); return; }
+    catch(e){ toast('Cloud save failed — saved on this device only', true); }
+  }
+  const idx = state.products.findIndex(p=>p.id===product.id);
+  if(idx>-1) state.products[idx]=product; else state.products.push(product);
+  await saveProducts();
+}
+async function dbDeleteProduct(id){
+  if(cloudReady){
+    try{ await cloudDb.collection('products').doc(id).delete(); return; }
+    catch(e){ toast('Cloud delete failed', true); }
+  }
+  state.products = state.products.filter(p=>p.id!==id);
+  await saveProducts();
+}
+async function dbSaveSettings(){
+  if(cloudReady){
+    try{ await cloudDb.collection('meta').doc('settings').set(state.settings, {merge:true}); return; }
+    catch(e){ toast('Cloud save failed — saved on this device only', true); }
+  }
+  await saveSettings();
+}
+async function dbCommitInvoice(invoice, updatedProducts){
+  if(cloudReady){
+    try{
+      const batch = cloudDb.batch();
+      batch.set(cloudDb.collection('invoices').doc(invoice.id), invoice);
+      updatedProducts.forEach(p=>batch.set(cloudDb.collection('products').doc(p.id), p));
+      batch.set(cloudDb.collection('meta').doc('settings'), state.settings, {merge:true});
+      await batch.commit();
+      return;
+    }catch(e){ toast('Cloud save failed — saved on this device only', true); }
+  }
+  state.invoices.push(invoice);
+  updatedProducts.forEach(up=>{
+    const idx = state.products.findIndex(p=>p.id===up.id);
+    if(idx>-1) state.products[idx] = up;
+  });
+  await saveInvoices();
+  await saveProducts();
+  await saveSettings();
+}
+
+const SEED_PRODUCTS = [{"id": "1", "category": "Latafah Maison Al Hambra", "name": "Spray Ameerat Al Arab 100 ml Red", "cost": 30.92, "uaePrice": 65, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "2", "category": "Latafah Maison Al Hambra", "name": "Spray Ameerat Al Arab 100 ml Black", "cost": 30.92, "uaePrice": 65, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "3", "category": "Latafah Maison Al Hambra", "name": "Spray Ameerat Al Arab Prive Rose 100 ml", "cost": 30.92, "uaePrice": 65, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "4", "category": "Latafah Maison Al Hambra", "name": "Spray Yara 100 ml Pink", "cost": 59.5, "uaePrice": 100, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "5", "category": "Latafah Maison Al Hambra", "name": "Spray Yara Moi 100 ml", "cost": 59.5, "uaePrice": 100, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "6", "category": "Latafah Maison Al Hambra", "name": "Spray Yara Eixir 100 ml", "cost": 76, "uaePrice": 120, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "7", "category": "Latafah Maison Al Hambra", "name": "Spray Stellar Marino 100 ml", "cost": 36, "uaePrice": 60, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "8", "category": "Latafah Maison Al Hambra", "name": "Spray Habik for Women 100 ml - Pink", "cost": 62.5, "uaePrice": 125, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "9", "category": "Latafah Maison Al Hambra", "name": "Spray Yeah Man Perfume 100 ml - Old", "cost": 35.71, "uaePrice": 50, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "10", "category": "Latafah Maison Al Hambra", "name": "Spray Yeah Man Perfume 100 ml - New", "cost": 30, "uaePrice": 50, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "11", "category": "Latafah Maison Al Hambra", "name": "Spray Hayaati Gold Elixir 100 ml", "cost": 35, "uaePrice": 70, "shipping": 20, "onHand": 7, "sold": 0}, {"id": "12", "category": "Latafah Maison Al Hambra", "name": "Spray Celeste 100 ml", "cost": 0.0, "uaePrice": 0, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "13", "category": "Latafah Maison Al Hambra", "name": "Mai Fresh Wash Washah", "cost": 0.0, "uaePrice": 0, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "14", "category": "Latafah Maison Al Hambra", "name": "Spray Delilah Blanc 100 ml", "cost": 39, "uaePrice": 65, "shipping": 20, "onHand": 12, "sold": 0}, {"id": "15", "category": "Latafah Maison Al Hambra", "name": "Spray Rave AU Soleil 100 ml - Brown", "cost": 55, "uaePrice": 92, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "16", "category": "Latafah Maison Al Hambra", "name": "Spray Salwa 100 ml", "cost": 51, "uaePrice": 85, "shipping": 20, "onHand": 6, "sold": 0}, {"id": "17", "category": "Latafah Maison Al Hambra", "name": "Spray Alive Now 100 ml", "cost": 42.86, "uaePrice": 60, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "18", "category": "Latafah Maison Al Hambra", "name": "Spray Sienna Voilet 100 ml", "cost": 49.52, "uaePrice": 65, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "19", "category": "Latafah Maison Al Hambra", "name": "Spray Jouri 100 ml", "cost": 91.43, "uaePrice": 120, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "20", "category": "Latafah Maison Al Hambra", "name": "Spray Victoria Flower Rosa Lilium 100 ml - TD", "cost": 42.86, "uaePrice": 60, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "21", "category": "Latafah Maison Al Hambra", "name": "Spray Athena 100 ml", "cost": 50, "uaePrice": 70, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "22", "category": "Latafah Maison Al Hambra", "name": "Spray Kingsman 30 ml", "cost": 17.86, "uaePrice": 25, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "23", "category": "Latafah Maison Al Hambra", "name": "Spray Ana Abiyedh Coral - 100 ml", "cost": 57.14, "uaePrice": 80, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "24", "category": "Latafah Maison Al Hambra", "name": "Spray Hayaati 100 ml", "cost": 53.33, "uaePrice": 0, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "25", "category": "Al Rasasi", "name": "Hawas Ice EDP 100 ml", "cost": 150, "uaePrice": 175, "shipping": 20, "onHand": 2, "sold": 0}, {"id": "26", "category": "Al Rasasi", "name": "Hawas Women 100 ml", "cost": 140, "uaePrice": 155, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "27", "category": "Al Rasasi", "name": "Qasamat - Rasana EDP 65 ml", "cost": 140, "uaePrice": 155, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "28", "category": "Other Brand", "name": "Calvin Klein Be U 100 ml EDT - Black", "cost": 55, "uaePrice": 80, "shipping": 20, "onHand": 2, "sold": 0}, {"id": "29", "category": "Other Brand", "name": "Calvin Klein One U 100 ml EDT - White", "cost": 79, "uaePrice": 100, "shipping": 20, "onHand": 5, "sold": 0}, {"id": "30", "category": "Other Brand", "name": "Clinique Happy Heart 100 ml EDP Spray", "cost": 99, "uaePrice": 100, "shipping": 20, "onHand": 5, "sold": 0}, {"id": "31", "category": "Other Brand", "name": "Clinique Happy for Men 100 ml EDT", "cost": 99, "uaePrice": 100, "shipping": 20, "onHand": 2, "sold": 0}, {"id": "32", "category": "Other Brand", "name": "Ferrari Scuderia Red M 125 ml EDT", "cost": 59, "uaePrice": 80, "shipping": 20, "onHand": 2, "sold": 0}, {"id": "33", "category": "Other Brand", "name": "Ferrari Scuderia Black M 125 ml EDT", "cost": 59, "uaePrice": 80, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "34", "category": "Arabian Oud", "name": "Cherry Bubbles 100 ml", "cost": 320, "uaePrice": 320, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "35", "category": "Arabian Oud", "name": "Taraf 100 ml", "cost": 853.65, "uaePrice": 853.65, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "36", "category": "Arabian Oud", "name": "Al Fareed 100 ml", "cost": 0.0, "uaePrice": 640.5, "shipping": 20, "onHand": 1, "sold": 0}, {"id": "37", "category": "Arabian Oud", "name": "Bella 100 ml", "cost": 0.0, "uaePrice": 325, "shipping": 20, "onHand": 1, "sold": 0}];
+
+const DEFAULT_SETTINGS = {
+  rate: 16.98,
+  invoiceSeq: 1,
+  categories: ["Latafah Maison Al Hambra","Al Rasasi","Other Brand","Arabian Oud"],
+  company: {
+    name: "Lunea Perfumes",
+    tagline: "A Scent as Beautiful as You",
+    phone: "",
+    instagram: "",
+    email: "",
+    address: "Dubai, UAE",
+    note: "Thank you for shopping with Lunea. All sales are final on fragrance items once opened."
+  }
+};
+
+let state = {
+  products: [],
+  invoices: [],
+  settings: JSON.parse(JSON.stringify(DEFAULT_SETTINGS)),
+  view: 'dashboard',
+  loaded: false,
+  draft: { market:'UAE', customer:'', contact:'', notes:'', items:{} },
+  invEditingId: null,
+  invFilterCat: 'all',
+  invSearch: '',
+  previewInvoice: null,
+  productModal: null, // {mode:'add'|'edit', data:{...}}
+  historySearch:'',
+  historyMarket:'all',
+};
+
+/* ---------------- storage helpers ----------------
+   This file can run two ways:
+   1) Inside Claude's artifact viewer, where window.storage syncs to your account.
+   2) As a plain downloaded HTML file opened directly in a browser, where
+      window.storage does not exist at all.
+   To make sure data is never silently lost, every read/write tries
+   window.storage first and always mirrors to the browser's localStorage too,
+   falling back to localStorage automatically when window.storage is absent. */
+function hasClaudeStorage(){
+  return typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+}
+async function rawGet(key){
+  if(hasClaudeStorage()){
+    try{
+      const r = await window.storage.get(key, false);
+      if(r && r.value != null) return r.value;
+    }catch(e){ /* not found there, fall through to localStorage */ }
+  }
+  try{
+    const v = localStorage.getItem(key);
+    if(v != null) return v;
+  }catch(e){ /* localStorage unavailable (e.g. private browsing) */ }
+  return null;
+}
+async function rawSet(key, value){
+  let ok = false;
+  if(hasClaudeStorage()){
+    try{ await window.storage.set(key, value, false); ok = true; }catch(e){ /* ignore, still try localStorage */ }
+  }
+  try{ localStorage.setItem(key, value); ok = true; }catch(e){ /* ignore */ }
+  return ok;
+}
+
+async function loadState(){
+  try{
+    const p = await rawGet(KEYS.PRODUCTS);
+    state.products = p ? JSON.parse(p) : null;
+  }catch(e){ state.products = null; }
+  if(!state.products){ state.products = SEED_PRODUCTS.slice(); await saveProducts(); }
+
+  try{
+    const inv = await rawGet(KEYS.INVOICES);
+    state.invoices = inv ? JSON.parse(inv) : [];
+  }catch(e){ state.invoices = []; }
+
+  try{
+    const s = await rawGet(KEYS.SETTINGS);
+    state.settings = s ? Object.assign(JSON.parse(JSON.stringify(DEFAULT_SETTINGS)), JSON.parse(s)) : JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+  }catch(e){ state.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS)); await saveSettings(); }
+
+  state.loaded = true;
+}
+async function saveProducts(){ const ok = await rawSet(KEYS.PRODUCTS, JSON.stringify(state.products)); if(!ok) toast('Could not save inventory changes', true); }
+async function saveInvoices(){ const ok = await rawSet(KEYS.INVOICES, JSON.stringify(state.invoices)); if(!ok) toast('Could not save invoice history', true); }
+async function saveSettings(){ const ok = await rawSet(KEYS.SETTINGS, JSON.stringify(state.settings)); if(!ok) toast('Could not save settings', true); }
+
+/* ---------------- helpers ---------------- */
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+/* ---- remembers which page you were on, and whether you're signed in, across a refresh ---- */
+const VALID_VIEWS = ['dashboard','inventory','invoice','history','settings'];
+function goToView(view){
+  state.view = VALID_VIEWS.includes(view) ? view : 'dashboard';
+  try{ localStorage.setItem('lunea:lastview', state.view); }catch(e){}
+  render();
+}
+function restoreLastView(){
+  try{
+    const v = localStorage.getItem('lunea:lastview');
+    if(v && VALID_VIEWS.includes(v)) state.view = v;
+  }catch(e){}
+}
+function markSessionUnlocked(){ try{ localStorage.setItem('lunea:session','1'); }catch(e){} }
+function clearSessionUnlocked(){ try{ localStorage.removeItem('lunea:session'); }catch(e){} }
+function hasUnlockedSession(){ try{ return localStorage.getItem('lunea:session')==='1'; }catch(e){ return false; } }
+
+function fmtAED(n){ return 'AED '+(Math.round((n||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtPHP(n){ return '₱'+(Math.round((n||0)*100)/100).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtMoney(n, market){ return market==='PH' ? fmtPHP(n) : fmtAED(n); }
+function todayStr(){ const d=new Date(); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function esc(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function remaining(p){ return Math.max(0, (p.onHand||0) - (p.sold||0)); }
+function phTotalAED(p){ return (p.uaePrice||0) + (p.shipping||0); }
+function phTotalPHP(p){ return phTotalAED(p) * state.settings.rate; }
+
+function toast(msg, isError){
+  const root = document.getElementById('toast-root');
+  const el = document.createElement('div');
+  el.className='toast';
+  el.style.background = isError ? 'var(--danger)' : 'var(--plum)';
+  el.textContent = msg;
+  root.innerHTML='';
+  root.appendChild(el);
+  setTimeout(()=>{ if(el.parentNode) el.parentNode.removeChild(el); }, 2600);
+}
+
+function nextInvoiceNumber(){
+  const n = state.settings.invoiceSeq || 1;
+  return 'LUN-'+String(n).padStart(4,'0');
+}
+
+/* ---------------- computed aggregates ---------------- */
+function computeDashboard(){
+  const totalOnHand = state.products.reduce((a,p)=>a+(p.onHand||0),0);
+  const totalSold = state.products.reduce((a,p)=>a+(p.sold||0),0);
+  const totalRemaining = state.products.reduce((a,p)=>a+remaining(p),0);
+  const capitalTotal = state.products.reduce((a,p)=>a+(p.cost||0)*(p.onHand||0),0);
+  const capitalRemaining = state.products.reduce((a,p)=>a+(p.cost||0)*remaining(p),0);
+
+  let revUAE=0, profitUAE=0, revPH=0, profitPH=0, unitsUAE=0, unitsPH=0;
+  state.invoices.forEach(inv=>{
+    inv.items.forEach(it=>{
+      const lineTotal = it.unitPrice*it.qty;
+      const lineCost = (inv.market==='PH' ? it.cost*state.settings.rate : it.cost) * it.qty;
+      if(inv.market==='PH'){ revPH+=lineTotal; profitPH+=(lineTotal-lineCost); unitsPH+=it.qty; }
+      else{ revUAE+=lineTotal; profitUAE+=(lineTotal-lineCost); unitsUAE+=it.qty; }
+    });
+  });
+
+  const byCat = {};
+  state.products.forEach(p=>{
+    byCat[p.category] = byCat[p.category] || {onHand:0,sold:0,remaining:0};
+    byCat[p.category].onHand += (p.onHand||0);
+    byCat[p.category].sold += (p.sold||0);
+    byCat[p.category].remaining += remaining(p);
+  });
+
+  return {totalOnHand,totalSold,totalRemaining,capitalTotal,capitalRemaining,revUAE,profitUAE,revPH,profitPH,unitsUAE,unitsPH,byCat};
+}
+
+/* ================= RENDER: SHELL ================= */
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="sidebar no-print">
+      <div class="brand">
+        <img src="data:image/jpeg;base64,${LOGO_B64}" alt="Lunea"/>
+        <div class="brand-name">Lunea</div>
+      </div>
+      <div class="brand-tag">${esc(state.settings.company.tagline)}</div>
+      <div style="display:flex; align-items:center; gap:6px; margin:-16px 0 20px 0; font-size:10.5px; color:${cloudReady?'#a9c9b1':'#c9a97a'};">
+        <span style="width:6px;height:6px;border-radius:50%;background:${cloudReady?'#7fae8b':'#d8b06f'};display:inline-block;"></span>
+        ${cloudReady ? `Live synced${(FIREBASE_CONFIGURED && typeof firebase!=='undefined' && firebase.auth().currentUser) ? ' · '+esc(firebase.auth().currentUser.email) : ''}` : 'Saved on this device'}
+      </div>
+      <nav class="navlist">
+        ${navItem('dashboard','Dashboard', icoHome())}
+        ${navItem('inventory','Inventory', icoBox())}
+        ${navItem('invoice','New invoice', icoReceipt())}
+        ${navItem('history','Sales history', icoClock())}
+        ${navItem('settings','Settings', icoGear())}
+      </nav>
+      <div class="rate-pill">
+        <label>AED → PHP rate</label>
+        <div class="rate-row">
+          <input id="sidebar-rate" type="number" step="0.01" value="${state.settings.rate}"/>
+        </div>
+      </div>
+      <div class="sidebar-foot">
+        Lunea Perfumes · internal system
+        <button class="btn btn-ghost btn-sm" id="lock-app-btn" style="width:100%; justify-content:center; margin-top:10px; color:#e7cfa0; border:1px solid rgba(231,207,160,0.25);">${icoLock()} ${cloudReady?'Sign out':'Lock'}</button>
+      </div>
+    </div>
+    <main id="main-view"></main>
+  `;
+  document.getElementById('sidebar-rate').addEventListener('change', async (e)=>{
+    const v = parseFloat(e.target.value);
+    if(!isNaN(v) && v>0){ state.settings.rate = v; await dbSaveSettings(); toast('Conversion rate updated'); renderView(); }
+  });
+  document.getElementById('lock-app-btn').addEventListener('click', lockApp);
+  renderView();
+}
+
+function navItem(key,label,icon){
+  return `<button class="navlink ${state.view===key?'active':''}" data-nav="${key}">${icon}<span>${label}</span></button>`;
+}
+
+function renderView(){
+  const main = document.getElementById('main-view');
+  if(state.view==='dashboard') main.innerHTML = viewDashboard();
+  else if(state.view==='inventory') main.innerHTML = viewInventory();
+  else if(state.view==='invoice') main.innerHTML = viewInvoice();
+  else if(state.view==='history') main.innerHTML = viewHistory();
+  else if(state.view==='settings') main.innerHTML = viewSettings();
+  attachGlobalNav();
+  attachViewHandlers();
+}
+
+function attachGlobalNav(){
+  document.querySelectorAll('[data-nav]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ goToView(btn.getAttribute('data-nav')); });
+  });
+}
+
+/* ================= ICONS (thin line, moon/star touches) ================= */
+function icoHome(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>`; }
+function icoBox(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8l9-5 9 5-9 5-9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>`; }
+function icoReceipt(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></svg>`; }
+function icoClock(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>`; }
+function icoGear(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14 3h-4l-.6 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12a7 7 0 0 0 .1 1.2l-2 1.6 2 3.4 2.3-1a7 7 0 0 0 2 1.2L10 21h4l.6-2.6a7 7 0 0 0 2-1.2l2.3 1 2-3.4-2-1.6c.07-.4.1-.8.1-1.2Z"/></svg>`; }
+function icoPlus(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg>`; }
+function icoEdit(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`; }
+function icoTrash(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>`; }
+function icoRestock(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4v16M4 12h16"/></svg>`; }
+function icoEye(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="2.6"/></svg>`; }
+function icoStar(){ return `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.2 6.6L21 9l-5.4 4.1L17.4 20 12 16.2 6.6 20l1.8-6.9L3 9l6.8-.4Z"/></svg>`; }
+function icoLock(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`; }
+function icoSearch(){ return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>`; }
+
+/* ================= DASHBOARD ================= */
+function viewDashboard(){
+  const d = computeDashboard();
+  const recent = state.invoices.slice().reverse().slice(0,5);
+  const cats = Object.keys(d.byCat);
+  const maxCat = Math.max(1, ...cats.map(c=>d.byCat[c].onHand));
+
+  return `
+    <div class="pagehead">
+      <div>
+        <h1>Dashboard</h1>
+        <div class="sub">${todayStr()} · overview across all platforms</div>
+      </div>
+      <button class="btn btn-gold" data-nav="invoice">${icoPlus()} New invoice</button>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card accent">
+        <div class="label">Units in stock (remaining)</div>
+        <div class="value">${d.totalRemaining} <small>/ ${d.totalOnHand} received</small></div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Units sold, all time</div>
+        <div class="value">${d.totalSold}</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Capital tied up in current stock</div>
+        <div class="value">${fmtAED(d.capitalRemaining)}</div>
+        <div class="delta muted" style="color:var(--muted)">of ${fmtAED(d.capitalTotal)} total stocked</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Invoices issued</div>
+        <div class="value">${state.invoices.length}</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="panel">
+          <div class="panel-head"><h3>UAE sales (AED)</h3><span class="tag market-uae">${d.unitsUAE} units sold</span></div>
+          <div class="calc-line"><span>Revenue</span><b>${fmtAED(d.revUAE)}</b></div>
+          <div class="calc-line"><span>Profit</span><b style="color:var(--sage)">${fmtAED(d.profitUAE)}</b></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Philippines sales (PHP)</h3><span class="tag market-ph">${d.unitsPH} units sold</span></div>
+          <div class="calc-line"><span>Revenue</span><b>${fmtPHP(d.revPH)}</b></div>
+          <div class="calc-line"><span>Profit</span><b style="color:var(--sage)">${fmtPHP(d.profitPH)}</b></div>
+          <div class="hint">Converted using the current rate of 1 AED = ${state.settings.rate} PHP.</div>
+        </div>
+        <div class="panel">
+          <h3>Stock by platform</h3>
+          ${cats.map(c=>`
+            <div style="margin-bottom:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
+                <span>${esc(c)}</span><span class="muted">${d.byCat[c].remaining} left of ${d.byCat[c].onHand}</span>
+              </div>
+              <div style="height:7px;background:var(--gold-dim);border-radius:6px;overflow:hidden;">
+                <div style="height:100%;width:${(d.byCat[c].remaining/maxCat*100)}%;background:var(--gold);border-radius:6px;"></div>
+              </div>
+            </div>
+          `).join('') || '<div class="muted">No products yet.</div>'}
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-head"><h3>Recent invoices</h3><button class="btn btn-ghost btn-sm" data-nav="history">View all</button></div>
+          ${recent.length? recent.map(inv=>`
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer;" data-view-invoice="${inv.id}">
+              <div>
+                <div style="font-size:13.5px;">${esc(inv.customer||'Walk-in customer')}</div>
+                <div class="muted" style="font-size:11.5px;">${inv.number} · ${inv.date}</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:13.5px;">${fmtMoney(inv.total, inv.market)}</div>
+                <span class="tag ${inv.market==='PH'?'market-ph':'market-uae'}">${inv.market==='PH'?'Philippines':'UAE'}</span>
+              </div>
+            </div>
+          `).join('') : `<div class="empty"><h4>No invoices yet</h4><div>Generate your first invoice to see it here.</div></div>`}
+        </div>
+        <div class="panel">
+          <h3>Low stock</h3>
+          ${lowStockList()}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function lowStockList(){
+  const low = state.products.filter(p=>remaining(p)<=1).sort((a,b)=>remaining(a)-remaining(b)).slice(0,8);
+  if(!low.length) return `<div class="muted" style="font-size:13px;">Everything is well stocked.</div>`;
+  return low.map(p=>`
+    <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;">
+      <span>${esc(p.name)}</span>
+      <span class="tag ${remaining(p)===0?'low':''}">${remaining(p)} left</span>
+    </div>
+  `).join('');
+}
+
+/* ================= INVENTORY ================= */
+function viewInventory(){
+  const cats = state.settings.categories;
+  const search = state.invSearch.toLowerCase();
+  return `
+    <div class="pagehead">
+      <div>
+        <h1>Inventory</h1>
+        <div class="sub">${state.products.length} products across ${cats.length} platforms · rate 1 AED = ${state.settings.rate} PHP</div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div class="searchbar">${icoSearch()}<input id="inv-search" placeholder="Search perfumes…" value="${esc(state.invSearch)}"/></div>
+        <button class="btn btn-gold" id="add-product-btn">${icoPlus()} Add product</button>
+      </div>
+    </div>
+
+    <div class="filter-chip-row">
+      <button class="chip ${state.invFilterCat==='all'?'active':''}" data-cat-filter="all">All platforms</button>
+      ${cats.map(c=>`<button class="chip ${state.invFilterCat===c?'active':''}" data-cat-filter="${esc(c)}">${esc(c)}</button>`).join('')}
+    </div>
+
+    ${cats.length ? cats.filter(c=>state.invFilterCat==='all'||state.invFilterCat===c).map(cat=>renderCategoryBlock(cat, search)).join('') : `<div class="empty"><h4>No platforms yet</h4><div>Add one from Settings.</div></div>`}
+  `;
+}
+
+function renderCategoryBlock(cat, search){
+  let items = state.products.filter(p=>p.category===cat);
+  if(search) items = items.filter(p=>p.name.toLowerCase().includes(search));
+  if(!items.length && search) return '';
+  return `
+    <div class="cat-block">
+      <div class="cat-title">
+        <h3><span class="dot"></span>${esc(cat)} <span class="cat-count">${items.length} item${items.length===1?'':'s'}</span></h3>
+      </div>
+      <div class="panel" style="padding:6px 22px;">
+        ${items.length ? `
+        <table>
+          <thead><tr>
+            <th>Perfume</th>
+            <th class="num">Cost /pc</th>
+            <th class="num">UAE price</th>
+            <th class="num">PH price (AED)</th>
+            <th class="num">PH price (PHP)</th>
+            <th class="num">On hand</th>
+            <th class="num">Sold</th>
+            <th class="num">In stock</th>
+            <th></th>
+          </tr></thead>
+          <tbody>
+            ${items.map(p=>`
+              <tr>
+                <td>${esc(p.name)}</td>
+                <td class="num muted">${fmtAED(p.cost)}</td>
+                <td class="num">${fmtAED(p.uaePrice)}</td>
+                <td class="num">${fmtAED(phTotalAED(p))}</td>
+                <td class="num">${fmtPHP(phTotalPHP(p))}</td>
+                <td class="num muted">${p.onHand}</td>
+                <td class="num muted">${p.sold}</td>
+                <td class="num"><span class="tag ${remaining(p)<=1?'low':''}">${remaining(p)}</span></td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Restock" data-restock="${p.id}">${icoRestock()}</button>
+                    <button class="icon-btn" title="Edit" data-edit="${p.id}">${icoEdit()}</button>
+                    <button class="icon-btn" title="Delete" data-delete="${p.id}">${icoTrash()}</button>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>` : `<div class="empty" style="padding:26px;">${search ? 'No perfumes match your search in this platform.' : 'No perfumes added yet — use "Add product" to start stocking this platform.'}</div>`}
+      </div>
+    </div>
+  `;
+}
+
+/* --- product modal --- */
+function openProductModal(mode, product){
+  state.productModal = { mode, data: product ? Object.assign({}, product) : { category: state.settings.categories[0]||'', name:'', cost:'', uaePrice:'', shipping:20, onHand:1 } };
+  renderModal();
+}
+function closeModal(){ state.productModal=null; state.previewInvoice=null; state.pinConfirm=null; document.getElementById('modal-root').innerHTML=''; }
+
+function askPinThenRun(label, actionFn){
+  state.pinConfirm = { label, actionFn };
+  renderModal();
+}
+
+function renderPinConfirmModal(){
+  const root = document.getElementById('modal-root');
+  const { label } = state.pinConfirm;
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modal-bg">
+      <div class="modal" style="max-width:380px;">
+        <div class="modal-head"><h3>Confirm with PIN</h3><button class="modal-close" id="modal-x">×</button></div>
+        <div class="hint" style="margin-bottom:12px;">This will <b>${esc(label)}</b>. This can't be undone. Enter the PIN to continue.</div>
+        <input id="confirm-pin-input" class="pin-input" style="width:100%;" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"/>
+        <div id="confirm-pin-error" class="lock-error" style="display:none; margin-top:8px;"></div>
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button class="btn btn-danger" id="confirm-pin-go" style="flex:1; justify-content:center;">Confirm</button>
+          <button class="btn" id="confirm-pin-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const close = closeModal;
+  document.getElementById('modal-x').onclick = close;
+  document.getElementById('confirm-pin-cancel').onclick = close;
+  document.getElementById('modal-bg').addEventListener('click',(e)=>{ if(e.target.id==='modal-bg') close(); });
+  const input = document.getElementById('confirm-pin-input');
+  input.focus();
+  const attempt = async ()=>{
+    if(input.value === APP_PIN){
+      const fn = state.pinConfirm.actionFn;
+      close();
+      await fn();
+    } else {
+      const err = document.getElementById('confirm-pin-error');
+      err.style.display='block';
+      err.textContent = 'Incorrect PIN. Try again.';
+      input.value='';
+      input.focus();
+    }
+  };
+  document.getElementById('confirm-pin-go').onclick = attempt;
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') attempt(); });
+}
+
+/* ---- scoped danger-zone actions (each gated behind askPinThenRun) ---- */
+async function deleteAllInvoices(){
+  if(cloudReady){
+    try{
+      const snap = await cloudDb.collection('invoices').get();
+      const batch = cloudDb.batch();
+      snap.docs.forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+    }catch(e){ toast('Cloud delete failed', true); return; }
+  } else {
+    state.invoices = [];
+    await saveInvoices();
+  }
+  toast('All invoices deleted');
+  render();
+}
+async function deleteAllProducts(){
+  if(cloudReady){
+    try{
+      const snap = await cloudDb.collection('products').get();
+      const batch = cloudDb.batch();
+      snap.docs.forEach(d=>batch.delete(d.ref));
+      await batch.commit();
+    }catch(e){ toast('Cloud delete failed', true); return; }
+  } else {
+    state.products = [];
+    await saveProducts();
+  }
+  toast('All perfumes deleted');
+  render();
+}
+async function restoreStarterCatalog(){
+  if(cloudReady){
+    try{
+      const [prodSnap, invSnap] = await Promise.all([cloudDb.collection('products').get(), cloudDb.collection('invoices').get()]);
+      const batch = cloudDb.batch();
+      prodSnap.docs.forEach(d=>batch.delete(d.ref));
+      invSnap.docs.forEach(d=>batch.delete(d.ref));
+      SEED_PRODUCTS.forEach(p=>batch.set(cloudDb.collection('products').doc(p.id), p));
+      const freshSettings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+      batch.set(cloudDb.collection('meta').doc('settings'), freshSettings);
+      await batch.commit();
+    }catch(e){ toast('Cloud reset failed', true); return; }
+  } else {
+    state.products = SEED_PRODUCTS.slice();
+    state.invoices = [];
+    state.settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
+    await saveProducts(); await saveInvoices(); await saveSettings();
+  }
+  toast('Starter catalog restored');
+  render();
+}
+
+function renderModal(){
+  const root = document.getElementById('modal-root');
+  if(state.pinConfirm){ renderPinConfirmModal(); return; }
+  if(state.productModal){
+    const m = state.productModal;
+    const d = m.data;
+    const phAed = (parseFloat(d.uaePrice)||0)+(parseFloat(d.shipping)||0);
+    const phPhp = phAed*state.settings.rate;
+    root.innerHTML = `
+      <div class="modal-backdrop" id="modal-bg">
+        <div class="modal">
+          <div class="modal-head"><h3>${m.mode==='add'?'Add a perfume':'Edit perfume'}</h3><button class="modal-close" id="modal-x">×</button></div>
+          <div class="field">
+            <label>Platform / brand</label>
+            <select id="f-category">
+              ${state.settings.categories.map(c=>`<option value="${esc(c)}" ${d.category===c?'selected':''}>${esc(c)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label>Perfume name</label>
+            <input id="f-name" value="${esc(d.name)}" placeholder="e.g. Spray Ameerat Al Arab 100 ml Red"/>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Cost per piece (AED)</label><input id="f-cost" type="number" step="0.01" value="${d.cost}"/></div>
+            <div class="field"><label>UAE selling price (AED)</label><input id="f-uae" type="number" step="0.01" value="${d.uaePrice}"/></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>PH shipping fee (AED)</label><input id="f-ship" type="number" step="0.01" value="${d.shipping}"/></div>
+            <div class="field"><label>${m.mode==='add'?'Starting stock (units)':'On-hand received (units)'}</label><input id="f-onhand" type="number" step="1" min="0" value="${d.onHand}"/></div>
+          </div>
+          <div class="calc-line"><span>Philippines price (AED, incl. shipping)</span><b id="calc-ph-aed">${fmtAED(phAed)}</b></div>
+          <div class="calc-line"><span>Philippines price (PHP)</span><b id="calc-ph-php">${fmtPHP(phPhp)}</b></div>
+          <div style="display:flex; gap:10px; margin-top:18px;">
+            <button class="btn btn-gold" id="save-product" style="flex:1;">Save perfume</button>
+            <button class="btn" id="cancel-product">Cancel</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.getElementById('modal-x').onclick = closeModal;
+    document.getElementById('cancel-product').onclick = closeModal;
+    document.getElementById('modal-bg').addEventListener('click', (e)=>{ if(e.target.id==='modal-bg') closeModal(); });
+    const recalc = ()=>{
+      const uae = parseFloat(document.getElementById('f-uae').value)||0;
+      const ship = parseFloat(document.getElementById('f-ship').value)||0;
+      document.getElementById('calc-ph-aed').textContent = fmtAED(uae+ship);
+      document.getElementById('calc-ph-php').textContent = fmtPHP((uae+ship)*state.settings.rate);
+    };
+    document.getElementById('f-uae').addEventListener('input', recalc);
+    document.getElementById('f-ship').addEventListener('input', recalc);
+    document.getElementById('save-product').onclick = async ()=>{
+      const name = document.getElementById('f-name').value.trim();
+      if(!name){ toast('Please enter a perfume name', true); return; }
+      const payload = {
+        category: document.getElementById('f-category').value,
+        name,
+        cost: parseFloat(document.getElementById('f-cost').value)||0,
+        uaePrice: parseFloat(document.getElementById('f-uae').value)||0,
+        shipping: parseFloat(document.getElementById('f-ship').value)||0,
+        onHand: parseInt(document.getElementById('f-onhand').value)||0,
+      };
+      let fullProduct;
+      if(m.mode==='add'){
+        fullProduct = Object.assign({id:uid(), sold:0}, payload);
+        toast('Perfume added to inventory');
+      } else {
+        fullProduct = Object.assign({}, d, payload);
+        toast('Perfume updated');
+      }
+      await dbSaveProduct(fullProduct);
+      closeModal();
+      renderView();
+    };
+    return;
+  }
+
+  if(state.previewInvoice){ renderInvoicePreviewModal(); return; }
+  if(state.restockId){ renderRestockModal(); return; }
+  root.innerHTML='';
+}
+
+function renderRestockModal(){
+  const p = state.products.find(x=>x.id===state.restockId);
+  if(!p){ state.restockId=null; return; }
+  const root = document.getElementById('modal-root');
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modal-bg">
+      <div class="modal" style="max-width:400px;">
+        <div class="modal-head"><h3>Restock</h3><button class="modal-close" id="modal-x">×</button></div>
+        <div class="hint" style="margin-bottom:10px;">${esc(p.name)} — currently ${remaining(p)} in stock (${p.onHand} received total).</div>
+        <div class="field"><label>Add units received</label><input id="restock-qty" type="number" min="1" value="1"/></div>
+        <div style="display:flex; gap:10px; margin-top:6px;">
+          <button class="btn btn-gold" id="restock-save" style="flex:1;">Add to stock</button>
+          <button class="btn" id="restock-cancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const close = ()=>{ state.restockId=null; document.getElementById('modal-root').innerHTML=''; };
+  document.getElementById('modal-x').onclick = close;
+  document.getElementById('restock-cancel').onclick = close;
+  document.getElementById('modal-bg').addEventListener('click',(e)=>{ if(e.target.id==='modal-bg') close(); });
+  document.getElementById('restock-save').onclick = async ()=>{
+    const qty = parseInt(document.getElementById('restock-qty').value)||0;
+    if(qty<=0){ toast('Enter a quantity greater than zero', true); return; }
+    const updated = Object.assign({}, p, { onHand: p.onHand + qty });
+    await dbSaveProduct(updated);
+    toast(`Added ${qty} unit(s) to ${p.name}`);
+    close();
+    renderView();
+  };
+}
+
+/* ================= NEW INVOICE ================= */
+function viewInvoice(){
+  const cats = state.settings.categories;
+  const search = state.invSearch.toLowerCase ? '' : '';
+  const draft = state.draft;
+  const items = Object.keys(draft.items).map(id=>({id, qty:draft.items[id]})).filter(x=>x.qty>0);
+  let subtotal = 0;
+  items.forEach(it=>{
+    const p = state.products.find(x=>x.id===it.id);
+    if(!p) return;
+    const price = draft.market==='PH' ? phTotalPHP(p) : p.uaePrice;
+    subtotal += price*it.qty;
+  });
+
+  return `
+    <div class="pagehead">
+      <div><h1>New invoice</h1><div class="sub">Select items, set quantities, then generate a printable invoice.</div></div>
+    </div>
+
+    <div class="invoice-layout">
+      <div>
+        <div class="panel">
+          <h3 style="margin-bottom:12px;">Sell in</h3>
+          <div class="market-toggle">
+            <div class="market-btn ${draft.market==='UAE'?'active':''}" data-market="UAE">
+              <div class="m-name">United Arab Emirates</div><div class="m-cur">Priced in AED</div>
+            </div>
+            <div class="market-btn ${draft.market==='PH'?'active':''}" data-market="PH">
+              <div class="m-name">Philippines</div><div class="m-cur">Priced in PHP · shipping included</div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Customer name</label><input id="cust-name" value="${esc(draft.customer)}" placeholder="Walk-in customer"/></div>
+            <div class="field"><label>Contact / address (optional)</label><input id="cust-contact" value="${esc(draft.contact)}" placeholder="Phone, IG handle, or address"/></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Choose perfumes</h3><div class="searchbar" style="max-width:220px;">${icoSearch()}<input id="inv-pick-search" placeholder="Search…" value="${esc(state.invSearch)}"/></div></div>
+          ${cats.map(cat=>renderPickerCategory(cat, draft)).join('')}
+        </div>
+      </div>
+
+      <div>
+        <div class="panel" style="position:sticky; top:20px;">
+          <h3 style="margin-bottom:10px;">Invoice summary</h3>
+          <div class="hint" style="margin-bottom:10px;">${nextInvoiceNumber()} · ${todayStr()}</div>
+          ${items.length ? items.map(it=>{
+            const p = state.products.find(x=>x.id===it.id);
+            if(!p) return '';
+            const price = draft.market==='PH' ? phTotalPHP(p) : p.uaePrice;
+            return `<div class="cart-line">
+              <div class="l-name">${esc(p.name)}<div class="l-sub">${it.qty} × ${fmtMoney(price, draft.market)}</div></div>
+              <div>${fmtMoney(price*it.qty, draft.market)}</div>
+            </div>`;
+          }).join('') : `<div class="muted" style="font-size:13px; padding:10px 0;">No items selected yet.</div>`}
+          <div class="cart-total"><span>Total</span><span class="amt">${fmtMoney(subtotal, draft.market)}</span></div>
+          <button class="btn btn-gold" id="generate-invoice-btn" style="width:100%; justify-content:center; margin-top:16px;" ${items.length?'':'disabled'}>${icoReceipt()} Generate invoice</button>
+          ${items.length? `<button class="btn btn-ghost" id="clear-draft-btn" style="width:100%; justify-content:center; margin-top:8px;">Clear selection</button>`:''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderPickerCategory(cat, draft){
+  let items = state.products.filter(p=>p.category===cat);
+  const search = (state.invSearch||'').toLowerCase();
+  if(search) items = items.filter(p=>p.name.toLowerCase().includes(search));
+  if(!items.length) return '';
+  return `
+    <div class="cat-block">
+      <div class="cat-title" style="margin-bottom:4px;"><h3 style="font-size:14.5px;"><span class="dot"></span>${esc(cat)}</h3></div>
+      ${items.map(p=>{
+        const stock = remaining(p);
+        const checked = !!draft.items[p.id];
+        const qty = draft.items[p.id]||1;
+        const price = draft.market==='PH' ? phTotalPHP(p) : p.uaePrice;
+        return `
+          <div class="pick-row">
+            <input type="checkbox" data-pick="${p.id}" ${checked?'checked':''} ${stock===0?'disabled':''}/>
+            <div class="pick-name">
+              <div class="n">${esc(p.name)}</div>
+              <div class="p">${fmtMoney(price, draft.market)} · ${stock} in stock</div>
+            </div>
+            ${checked ? `
+            <div class="qty-box">
+              <button data-qty-dec="${p.id}">−</button>
+              <input type="number" min="1" max="${stock}" value="${qty}" data-qty-input="${p.id}"/>
+              <button data-qty-inc="${p.id}">+</button>
+            </div>` : ''}
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+async function generateInvoice(){
+  const draft = state.draft;
+  const items = Object.keys(draft.items).map(id=>({id, qty:draft.items[id]})).filter(x=>x.qty>0);
+  if(!items.length){ toast('Select at least one perfume', true); return; }
+
+  // validate stock
+  for(const it of items){
+    const p = state.products.find(x=>x.id===it.id);
+    if(!p || remaining(p) < it.qty){ toast(`Not enough stock for ${p?p.name:'item'}`, true); return; }
+  }
+
+  const invItems = items.map(it=>{
+    const p = state.products.find(x=>x.id===it.id);
+    const price = draft.market==='PH' ? phTotalPHP(p) : p.uaePrice;
+    return { productId:p.id, name:p.name, category:p.category, qty:it.qty, unitPrice:price, cost:p.cost };
+  });
+  const total = invItems.reduce((a,it)=>a+it.unitPrice*it.qty,0);
+
+  const invoiceSeqNum = state.settings.invoiceSeq || 1;
+  const invoice = {
+    id: uid(),
+    seq: invoiceSeqNum,
+    number: nextInvoiceNumber(),
+    date: todayStr(),
+    market: draft.market,
+    customer: draft.customer || 'Walk-in customer',
+    contact: draft.contact || '',
+    items: invItems,
+    total,
+  };
+
+  // decrement stock (build updated product records without mutating originals in place)
+  const updatedProducts = [];
+  invItems.forEach(it=>{
+    const p = state.products.find(x=>x.id===it.productId);
+    if(p){
+      const updated = Object.assign({}, p, { sold: (p.sold||0) + it.qty });
+      updatedProducts.push(updated);
+    }
+  });
+  state.settings.invoiceSeq = invoiceSeqNum + 1;
+
+  await dbCommitInvoice(invoice, updatedProducts);
+
+  state.draft = { market:'UAE', customer:'', contact:'', notes:'', items:{} };
+  state.previewInvoice = invoice;
+  renderModal();
+  renderView();
+}
+
+/* ================= SALES HISTORY ================= */
+function viewHistory(){
+  let list = state.invoices.slice().reverse();
+  if(state.historyMarket!=='all') list = list.filter(i=>i.market===state.historyMarket);
+  if(state.historySearch) list = list.filter(i=>(i.customer||'').toLowerCase().includes(state.historySearch.toLowerCase()) || i.number.toLowerCase().includes(state.historySearch.toLowerCase()));
+
+  const totalAED = state.invoices.filter(i=>i.market==='UAE').reduce((a,i)=>a+i.total,0);
+  const totalPHP = state.invoices.filter(i=>i.market==='PH').reduce((a,i)=>a+i.total,0);
+
+  return `
+    <div class="pagehead">
+      <div><h1>Sales history</h1><div class="sub">${state.invoices.length} invoice${state.invoices.length===1?'':'s'} generated</div></div>
+      <div style="display:flex;gap:10px;">
+        <div class="searchbar">${icoSearch()}<input id="hist-search" placeholder="Search customer or invoice #" value="${esc(state.historySearch)}"/></div>
+      </div>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+      <div class="stat-card"><div class="label">UAE revenue</div><div class="value">${fmtAED(totalAED)}</div></div>
+      <div class="stat-card"><div class="label">Philippines revenue</div><div class="value">${fmtPHP(totalPHP)}</div></div>
+    </div>
+    <div class="filter-chip-row">
+      <button class="chip ${state.historyMarket==='all'?'active':''}" data-hist-filter="all">All markets</button>
+      <button class="chip ${state.historyMarket==='UAE'?'active':''}" data-hist-filter="UAE">UAE</button>
+      <button class="chip ${state.historyMarket==='PH'?'active':''}" data-hist-filter="PH">Philippines</button>
+    </div>
+    <div class="panel" style="padding:6px 22px;">
+      ${list.length ? `
+      <table>
+        <thead><tr><th>Invoice</th><th>Customer</th><th>Market</th><th class="num">Items</th><th class="num">Total</th><th></th></tr></thead>
+        <tbody>
+          ${list.map(inv=>`
+            <tr>
+              <td>${inv.number}<div class="muted" style="font-size:11px;">${inv.date}</div></td>
+              <td>${esc(inv.customer)}</td>
+              <td><span class="tag ${inv.market==='PH'?'market-ph':'market-uae'}">${inv.market==='PH'?'Philippines':'UAE'}</span></td>
+              <td class="num">${inv.items.reduce((a,i)=>a+i.qty,0)}</td>
+              <td class="num">${fmtMoney(inv.total, inv.market)}</td>
+              <td><div class="row-actions"><button class="icon-btn" data-view-invoice="${inv.id}">${icoEye()}</button></div></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>` : `<div class="empty"><h4>No invoices found</h4><div>Try a different filter or generate your first invoice.</div></div>`}
+    </div>
+  `;
+}
+
+/* ================= INVOICE PREVIEW / PRINT ================= */
+function renderInvoicePreviewModal(){
+  const inv = state.previewInvoice;
+  const root = document.getElementById('modal-root');
+  const co = state.settings.company;
+  root.innerHTML = `
+    <div class="modal-backdrop" id="modal-bg">
+      <div class="modal wide">
+        <div class="modal-head no-print"><h3>Invoice ${inv.number}</h3><button class="modal-close" id="modal-x">×</button></div>
+        <div id="print-area">
+          <div class="invoice-doc">
+            <div class="idoc-head">
+              <div class="idoc-brand">
+                <img src="data:image/jpeg;base64,${LOGO_B64}"/>
+                <div><div class="nm">${esc(co.name)}</div><div class="tg">${esc(co.tagline)}</div></div>
+              </div>
+              <div class="idoc-meta">
+                <div class="num">INVOICE</div>
+                <div>${inv.number}</div>
+                <div>${inv.date}</div>
+                <span class="tag ${inv.market==='PH'?'market-ph':'market-uae'}" style="margin-top:6px;display:inline-block;">${inv.market==='PH'?'Philippines order':'UAE order'}</span>
+              </div>
+            </div>
+            <div class="idoc-bill">
+              <div><div class="k">Billed to</div><div>${esc(inv.customer)}</div>${inv.contact?`<div class="muted">${esc(inv.contact)}</div>`:''}</div>
+              <div style="text-align:right;"><div class="k">From</div><div>${esc(co.address||'')}</div>${co.phone?`<div class="muted">${esc(co.phone)}</div>`:''}${co.instagram?`<div class="muted">${esc(co.instagram)}</div>`:''}</div>
+            </div>
+            <table>
+              <thead><tr><th>Item</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead>
+              <tbody>
+                ${inv.items.map(it=>`
+                  <tr><td>${esc(it.name)}<div class="muted" style="font-size:11px;">${esc(it.category)}</div></td>
+                  <td class="num">${it.qty}</td>
+                  <td class="num">${fmtMoney(it.unitPrice, inv.market)}</td>
+                  <td class="num">${fmtMoney(it.unitPrice*it.qty, inv.market)}</td></tr>
+                `).join('')}
+              </tbody>
+            </table>
+            <div class="idoc-totals">
+              <div class="row"><span>Subtotal</span><span>${fmtMoney(inv.total, inv.market)}</span></div>
+              <div class="row grand"><span>Total due</span><span>${fmtMoney(inv.total, inv.market)}</span></div>
+            </div>
+            <div class="idoc-sign">
+              <svg class="stamp-seal" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="46" fill="none" stroke="var(--gold)" stroke-width="1.6" opacity="0.85"/>
+                <circle cx="50" cy="50" r="39" fill="none" stroke="var(--gold)" stroke-width="1" opacity="0.6" stroke-dasharray="2 3"/>
+                <path id="stampCirclePath" d="M 50,50 m -30,0 a 30,30 0 1,1 60,0 a 30,30 0 1,1 -60,0" fill="none"/>
+                <text font-family="Jost, sans-serif" font-size="7.6" letter-spacing="2.5" fill="var(--gold)">
+                  <textPath href="#stampCirclePath" startOffset="2%">LUNEA PERFUMES · AUTHENTIC PURCHASE ·</textPath>
+                </text>
+                <text x="50" y="47" text-anchor="middle" font-family="'Playfair Display', serif" font-size="15" fill="var(--sage)">LUNEA</text>
+                <text x="50" y="61" text-anchor="middle" font-family="Jost, sans-serif" font-size="6.5" letter-spacing="1.5" fill="var(--muted)">${esc(inv.date)}</text>
+              </svg>
+              <div class="sign-block">
+                <div class="sign-line"></div>
+                <div class="sign-label">Authorized seller signature</div>
+              </div>
+            </div>
+            <div class="idoc-foot">${esc(co.note)}</div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:20px;" class="no-print">
+          <button class="btn btn-gold" id="print-invoice-btn" style="flex:1; justify-content:center;">Print / save as PDF</button>
+          <button class="btn" id="close-preview-btn">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
+  const close = closeModal;
+  document.getElementById('modal-x').onclick = close;
+  document.getElementById('close-preview-btn').onclick = close;
+  document.getElementById('print-invoice-btn').onclick = ()=>window.print();
+  document.getElementById('modal-bg').addEventListener('click',(e)=>{ if(e.target.id==='modal-bg') close(); });
+}
+
+/* ================= SETTINGS ================= */
+function viewSettings(){
+  const co = state.settings.company;
+  return `
+    <div class="pagehead"><div><h1>Settings</h1><div class="sub">Conversion rate, platforms, and company details for your invoices.</div></div></div>
+
+    <div class="panel" style="border-color:${cloudReady?'rgba(90,125,99,0.4)':'rgba(185,143,76,0.35)'};">
+      <div class="panel-head">
+        <h3>${cloudReady ? 'Live sync is on' : 'Live sync &amp; sign-in'}</h3>
+        <span class="tag ${cloudReady?'':'low'}" style="${cloudReady?'background:rgba(90,125,99,0.12);color:var(--sage);border-color:rgba(90,125,99,0.3);':''}">${cloudReady ? 'Connected' : 'Not connected'}</span>
+      </div>
+      ${cloudReady ? `
+        <p class="hint">This device is connected to your shared live database. Anything you or your wife add, sell, or edit updates for both of you automatically, from any browser you each sign in on.</p>
+      ` : `
+        <p class="hint" style="margin-bottom:10px;">Right now this only saves on this device, and the PIN screen is shared by anyone who knows it. To get one shared live inventory plus separate logins for you and your wife, connect a free Firebase database (about 10 minutes, one time):</p>
+        <ol style="font-size:12.5px; color:var(--muted); padding-left:18px; line-height:1.9;">
+          <li>Go to <b>console.firebase.google.com</b> and sign in with any Google account.</li>
+          <li>Click <b>Add project</b>, give it a name (e.g. "lunea-perfumes"), skip Google Analytics, and create it.</li>
+          <li>In the left menu, open <b>Build → Firestore Database</b>, click <b>Create database</b>, pick a nearby location, and start in production mode.</li>
+          <li>Go to the <b>Rules</b> tab and replace the contents with:<br>
+            <code style="display:block;background:#f5f0e6;padding:8px;border-radius:6px;margin-top:6px;font-size:11px;white-space:pre;">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}</code> then click <b>Publish</b>.</li>
+          <li>Open <b>Build → Authentication</b>, click <b>Get started</b>, go to <b>Sign-in method</b>, and enable <b>Email/Password</b>.</li>
+          <li>Go to the <b>Users</b> tab, click <b>Add user</b>, and create a login (email + password) for yourself. Click <b>Add user</b> again to create one for your wife. These two accounts are the only ones that will ever be able to sign in — there is no public sign-up.</li>
+          <li>Click the gear icon → <b>Project settings</b>, scroll to "Your apps", click the <b>&lt;/&gt;</b> (web) icon, register the app, and copy the <code>firebaseConfig</code> values shown.</li>
+          <li>Open this file in a text editor, find <code>FIREBASE_CONFIG</code> near the top of the script, and paste your six values in. Save, re-upload / re-open — the app will now show a sign-in screen instead of the PIN.</li>
+        </ol>
+        <p class="hint" style="margin-top:10px;">Once this is connected, the plain 6-digit PIN is retired — each of you signs in with your own email and password instead.</p>
+      `}
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="panel">
+          <h3>Conversion rate</h3>
+          <div class="field"><label>1 AED equals how many PHP?</label><input id="set-rate" type="number" step="0.01" value="${state.settings.rate}"/></div>
+          <button class="btn btn-gold btn-sm" id="save-rate-btn">Save rate</button>
+        </div>
+
+        <div class="panel">
+          <h3>Platforms / brands</h3>
+          <div id="cat-list">
+            ${state.settings.categories.map(c=>`
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);">
+                <span>${esc(c)}</span>
+                <button class="icon-btn" data-del-cat="${esc(c)}">${icoTrash()}</button>
+              </div>
+            `).join('')}
+          </div>
+          <div class="field" style="margin-top:12px;"><label>Add a new platform</label>
+            <div style="display:flex;gap:8px;">
+              <input id="new-cat-input" placeholder="e.g. Rasasi Signature"/>
+              <button class="btn btn-sm" id="add-cat-btn">${icoPlus()} Add</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h3>Company details (shown on invoices)</h3>
+          <div class="field"><label>Business name</label><input id="co-name" value="${esc(co.name)}"/></div>
+          <div class="field"><label>Tagline</label><input id="co-tag" value="${esc(co.tagline)}"/></div>
+          <div class="field-row">
+            <div class="field"><label>Phone</label><input id="co-phone" value="${esc(co.phone)}"/></div>
+            <div class="field"><label>Instagram / social</label><input id="co-ig" value="${esc(co.instagram)}"/></div>
+          </div>
+          <div class="field"><label>Address</label><input id="co-addr" value="${esc(co.address)}"/></div>
+          <div class="field"><label>Invoice footer note</label><textarea id="co-note" rows="3">${esc(co.note)}</textarea></div>
+          <button class="btn btn-gold btn-sm" id="save-company-btn">Save company details</button>
+        </div>
+
+        <div class="panel">
+          <h3 style="color:var(--danger);">Danger zone</h3>
+          <p class="hint" style="margin-bottom:14px;">Each action below asks for the PIN first and can't be undone. They're kept separate on purpose so one accidental tap can't wipe everything.</p>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);">
+            <div>
+              <div style="font-size:13.5px;">Delete all invoices</div>
+              <div class="hint">Clears sales history and totals. Perfumes and stock are untouched.</div>
+            </div>
+            <button class="btn btn-danger btn-sm" id="delete-invoices-btn">Delete invoices</button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--line);">
+            <div>
+              <div style="font-size:13.5px;">Delete all perfumes</div>
+              <div class="hint">Empties the entire inventory list. Invoice history is untouched.</div>
+            </div>
+            <button class="btn btn-danger btn-sm" id="delete-products-btn">Delete perfumes</button>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+            <div>
+              <div style="font-size:13.5px;">Restore starter catalog</div>
+              <div class="hint">Erases everything and brings back the original 37-item sample catalog.</div>
+            </div>
+            <button class="btn btn-danger btn-sm" id="restore-starter-btn">Restore</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ================= EVENT WIRING PER VIEW ================= */
+function attachViewHandlers(){
+  // dashboard invoice quick view
+  document.querySelectorAll('[data-view-invoice]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const inv = state.invoices.find(i=>i.id===el.getAttribute('data-view-invoice'));
+      if(inv){ state.previewInvoice = inv; renderModal(); }
+    });
+  });
+
+  if(state.view==='inventory'){
+    const addBtn = document.getElementById('add-product-btn');
+    if(addBtn) addBtn.onclick = ()=>openProductModal('add', null);
+    document.querySelectorAll('[data-cat-filter]').forEach(el=>{
+      el.addEventListener('click', ()=>{ state.invFilterCat = el.getAttribute('data-cat-filter'); renderView(); });
+    });
+    document.querySelectorAll('[data-edit]').forEach(el=>{
+      el.addEventListener('click', ()=>{ const p = state.products.find(x=>x.id===el.getAttribute('data-edit')); openProductModal('edit', p); });
+    });
+    document.querySelectorAll('[data-delete]').forEach(el=>{
+      el.addEventListener('click', async ()=>{
+        const id = el.getAttribute('data-delete');
+        const p = state.products.find(x=>x.id===id);
+        if(p && confirm(`Remove "${p.name}" from inventory?`)){
+          await dbDeleteProduct(id);
+          toast('Perfume removed');
+          renderView();
+        }
+      });
+    });
+    document.querySelectorAll('[data-restock]').forEach(el=>{
+      el.addEventListener('click', ()=>{ state.restockId = el.getAttribute('data-restock'); renderModal(); });
+    });
+    const searchEl = document.getElementById('inv-search');
+    if(searchEl){
+      searchEl.addEventListener('input', (e)=>{ state.invSearch = e.target.value; renderView(); document.getElementById('inv-search').focus(); document.getElementById('inv-search').selectionStart = document.getElementById('inv-search').value.length; });
+    }
+  }
+
+  if(state.view==='invoice'){
+    document.querySelectorAll('[data-market]').forEach(el=>{
+      el.addEventListener('click', ()=>{ state.draft.market = el.getAttribute('data-market'); renderView(); });
+    });
+    const cn = document.getElementById('cust-name');
+    if(cn) cn.addEventListener('input', (e)=>{ state.draft.customer = e.target.value; });
+    const cc = document.getElementById('cust-contact');
+    if(cc) cc.addEventListener('input', (e)=>{ state.draft.contact = e.target.value; });
+    const ps = document.getElementById('inv-pick-search');
+    if(ps) ps.addEventListener('input', (e)=>{ state.invSearch = e.target.value; renderView(); document.getElementById('inv-pick-search').focus(); });
+
+    document.querySelectorAll('[data-pick]').forEach(el=>{
+      el.addEventListener('change', ()=>{
+        const id = el.getAttribute('data-pick');
+        if(el.checked) state.draft.items[id] = 1; else delete state.draft.items[id];
+        renderView();
+      });
+    });
+    document.querySelectorAll('[data-qty-inc]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const id = el.getAttribute('data-qty-inc');
+        const p = state.products.find(x=>x.id===id);
+        const max = p?remaining(p):999;
+        state.draft.items[id] = Math.min(max, (state.draft.items[id]||1)+1);
+        renderView();
+      });
+    });
+    document.querySelectorAll('[data-qty-dec]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const id = el.getAttribute('data-qty-dec');
+        state.draft.items[id] = Math.max(1, (state.draft.items[id]||1)-1);
+        renderView();
+      });
+    });
+    document.querySelectorAll('[data-qty-input]').forEach(el=>{
+      el.addEventListener('change', ()=>{
+        const id = el.getAttribute('data-qty-input');
+        const p = state.products.find(x=>x.id===id);
+        const max = p?remaining(p):999;
+        let v = parseInt(el.value)||1;
+        v = Math.max(1, Math.min(max, v));
+        state.draft.items[id] = v;
+        renderView();
+      });
+    });
+    const genBtn = document.getElementById('generate-invoice-btn');
+    if(genBtn) genBtn.onclick = generateInvoice;
+    const clearBtn = document.getElementById('clear-draft-btn');
+    if(clearBtn) clearBtn.onclick = ()=>{ state.draft.items = {}; renderView(); };
+  }
+
+  if(state.view==='history'){
+    document.querySelectorAll('[data-hist-filter]').forEach(el=>{
+      el.addEventListener('click', ()=>{ state.historyMarket = el.getAttribute('data-hist-filter'); renderView(); });
+    });
+    const hs = document.getElementById('hist-search');
+    if(hs) hs.addEventListener('input', (e)=>{ state.historySearch = e.target.value; renderView(); document.getElementById('hist-search').focus(); });
+  }
+
+  if(state.view==='settings'){
+    document.getElementById('save-rate-btn').onclick = async ()=>{
+      const v = parseFloat(document.getElementById('set-rate').value);
+      if(!isNaN(v) && v>0){ state.settings.rate = v; await dbSaveSettings(); toast('Conversion rate saved'); renderView(); }
+    };
+    document.getElementById('add-cat-btn').onclick = async ()=>{
+      const inp = document.getElementById('new-cat-input');
+      const v = inp.value.trim();
+      if(!v){ return; }
+      if(state.settings.categories.includes(v)){ toast('That platform already exists', true); return; }
+      state.settings.categories.push(v);
+      await dbSaveSettings();
+      toast('Platform added');
+      renderView();
+    };
+    document.querySelectorAll('[data-del-cat]').forEach(el=>{
+      el.addEventListener('click', async ()=>{
+        const cat = el.getAttribute('data-del-cat');
+        const inUse = state.products.some(p=>p.category===cat);
+        if(inUse){ toast('Move or delete its products first', true); return; }
+        if(confirm(`Remove platform "${cat}"?`)){
+          state.settings.categories = state.settings.categories.filter(c=>c!==cat);
+          await dbSaveSettings();
+          renderView();
+        }
+      });
+    });
+    document.getElementById('save-company-btn').onclick = async ()=>{
+      state.settings.company = {
+        name: document.getElementById('co-name').value,
+        tagline: document.getElementById('co-tag').value,
+        phone: document.getElementById('co-phone').value,
+        instagram: document.getElementById('co-ig').value,
+        address: document.getElementById('co-addr').value,
+        note: document.getElementById('co-note').value,
+      };
+      await dbSaveSettings();
+      toast('Company details saved');
+      render();
+    };
+    document.getElementById('delete-invoices-btn').onclick = ()=>{
+      askPinThenRun('permanently delete every invoice and reset your sales history', deleteAllInvoices);
+    };
+    document.getElementById('delete-products-btn').onclick = ()=>{
+      askPinThenRun('permanently delete every perfume from your inventory', deleteAllProducts);
+    };
+    document.getElementById('restore-starter-btn').onclick = ()=>{
+      askPinThenRun('erase everything and restore the original 37-item starter catalog', restoreStarterCatalog);
+    };
+  }
+}
+
+/* ================= LOCK SCREEN (local-only / PIN fallback) ================= */
+function renderLockScreen(errorMsg){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="lock-screen">
+      <img class="lock-logo" src="data:image/jpeg;base64,${LOGO_B64}" alt="Lunea"/>
+      <h1>Lunea</h1>
+      <div class="lock-sub">Enter your PIN to open the system</div>
+      <input id="pin-input" class="pin-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="off"/>
+      ${errorMsg ? `<div class="lock-error">${esc(errorMsg)}</div>` : ''}
+      <div class="lock-btn-row"><button class="btn btn-gold" id="unlock-btn">Unlock</button></div>
+      <div class="lock-hint">Private to Lunea Perfumes</div>
+    </div>
+  `;
+  const input = document.getElementById('pin-input');
+  input.focus();
+  const attempt = ()=>{
+    if(input.value === APP_PIN){
+      unlocked = true;
+      markSessionUnlocked();
+      bootApp();
+    } else {
+      renderLockScreen('Incorrect PIN. Please try again.');
+    }
+  };
+  document.getElementById('unlock-btn').addEventListener('click', attempt);
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') attempt(); });
+}
+
+async function bootApp(){
+  document.getElementById('app').innerHTML = '<div class="loading-screen">Opening the boutique…</div>';
+  if(!state.loaded){ await loadState(); state.loaded = true; }
+  restoreLastView();
+  render();
+}
+
+function lockApp(){
+  clearSessionUnlocked();
+  if(cloudReady && typeof firebase !== 'undefined'){
+    detachCloudListeners();
+    cloudReady = false;
+    state.loaded = false;
+    firebase.auth().signOut().catch(()=>{});
+    // onAuthStateChanged (below) will show the sign-in screen once sign-out completes.
+  } else {
+    unlocked = false;
+    cloudReady = false;
+    renderLockScreen();
+  }
+}
+
+/* ================= LOGIN SCREEN (real per-person accounts, cloud mode) ================= */
+function ensureFirebaseApp(){
+  if(!FIREBASE_CONFIGURED || typeof firebase === 'undefined') return false;
+  if(!cloudDb){
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      // Keep people signed in across refreshes and browser restarts on this device,
+      // until they tap "Sign out" — that's what fixes the "refresh sends me back
+      // to the lock screen" issue.
+      firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+      cloudDb = firebase.firestore();
+    }
+    catch(e){ return false; }
+  }
+  return true;
+}
+
+function renderLoginScreen(errorMsg){
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="lock-screen">
+      <img class="lock-logo" src="data:image/jpeg;base64,${LOGO_B64}" alt="Lunea"/>
+      <h1>Lunea</h1>
+      <div class="lock-sub">Sign in to open the system</div>
+      <input id="login-email" class="pin-input login-input" type="email" placeholder="Email" autocomplete="username"/>
+      <input id="login-pass" class="pin-input login-input" style="margin-top:10px;" type="password" placeholder="Password" autocomplete="current-password"/>
+      ${errorMsg ? `<div class="lock-error">${esc(errorMsg)}</div>` : ''}
+      <div class="lock-btn-row"><button class="btn btn-gold" id="login-btn">Sign in</button></div>
+      <div class="lock-hint">Private to Lunea Perfumes · ask the owner for your login</div>
+    </div>
+  `;
+  document.getElementById('login-email').focus();
+  const attempt = async ()=>{
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-pass').value;
+    if(!email || !pass){ renderLoginScreen('Enter your email and password.'); return; }
+    try{
+      await firebase.auth().signInWithEmailAndPassword(email, pass);
+      // onAuthStateChanged (below) takes it from here and boots the app.
+    }catch(e){
+      renderLoginScreen('Could not sign in — check your email and password.');
+    }
+  };
+  document.getElementById('login-btn').addEventListener('click', attempt);
+  ['login-email','login-pass'].forEach(id=>{
+    document.getElementById(id).addEventListener('keydown', (e)=>{ if(e.key==='Enter') attempt(); });
+  });
+}
+
+async function bootCloudApp(){
+  document.getElementById('app').innerHTML = '<div class="loading-screen">Opening the boutique…</div>';
+  cloudReady = true;
+  await attachCloudListeners();
+  // On a brand-new, completely empty Firestore project only, seed the starter catalog once.
+  if(state.products.length===0 && state.invoices.length===0){
+    try{
+      const batch = cloudDb.batch();
+      SEED_PRODUCTS.forEach(p=>batch.set(cloudDb.collection('products').doc(p.id), p));
+      batch.set(cloudDb.collection('meta').doc('settings'), state.settings);
+      await batch.commit();
+    }catch(e){ /* non-fatal; can add products manually */ }
+  }
+  state.loaded = true;
+  restoreLastView();
+  render();
+}
+
+/* ================= INIT ================= */
+(function init(){
+  if(ensureFirebaseApp()){
+    document.getElementById('app').innerHTML = '<div class="loading-screen">Opening the boutique…</div>';
+    firebase.auth().onAuthStateChanged(async (user)=>{
+      if(user){
+        if(!state.loaded) await bootCloudApp();
+      } else {
+        state.loaded = false;
+        renderLoginScreen();
+      }
+    });
+  } else if(hasUnlockedSession()){
+    // Already unlocked earlier on this device/browser — skip straight past the PIN screen.
+    unlocked = true;
+    bootApp();
+  } else {
+    renderLockScreen();
+  }
+})();
+</script>
+</body>
+</html>
